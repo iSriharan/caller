@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:flutter_tts/flutter_tts.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -18,31 +20,109 @@ class _HomePageState extends State<HomePage> {
   List<Contact> _contacts = const [];
   bool isTamil = true;
 
-  List<Contact> get contacts {
-    return _contacts.where((c) {
-      final displayName = c.displayName;
-
-      final containsEnglish =
-          RegExp(r'[a-zA-Z]').hasMatch(displayName);
-      return isTamil ? !containsEnglish : containsEnglish;
-    }).toList();
-  }
+  // Voice features
+  late stt.SpeechToText _speech;
+  late FlutterTts flutterTts;
 
   bool _isLoading = false;
   String selectedAlphabet = '';
   final ScrollController _scrollController =
       ScrollController();
 
-  // Add for recent calls
   List<String> _recentNumbers = [];
-
   int currentPage = 0;
 
   @override
   void initState() {
     super.initState();
+    _speech = stt.SpeechToText();
+    flutterTts = FlutterTts();
     loadContacts();
     loadRecentNumbers();
+  }
+
+  // ---------------- Voice Methods ----------------
+  Future<void> startListening() async {
+    // Request microphone permission
+    var status = await Permission.microphone.request();
+    if (status.isGranted) {
+      bool available = await _speech.initialize(
+        onStatus: (status) => debugPrint('Status: $status'),
+        onError: (error) => debugPrint('Error: $error'),
+      );
+      if (available) {
+        _speech.listen(
+          localeId: "ta-IN", // or "en-IN"
+          onResult: (result) {
+            String spokenText =
+                result.recognizedWords.trim();
+            debugPrint("Heard: $spokenText");
+            findAndDial(spokenText);
+          },
+        );
+      } else {
+        debugPrint("Speech recognition not available");
+      }
+    } else {
+      debugPrint("Microphone permission denied");
+    }
+  }
+
+
+  void stopListening() {
+    _speech.stop();
+  }
+
+  Future<void> speak(String text) async {
+    await flutterTts.setLanguage("ta-IN"); // Tamil
+    await flutterTts.setSpeechRate(0.9);
+    await flutterTts.speak(text);
+  }
+
+  Future<void> findAndDial(String query) async {
+    try {
+      // Search for a contact matching the query
+      final matchingContact =
+          _contacts.cast<Contact?>().firstWhere(
+                (contact) =>
+                    contact != null &&
+                    contact.displayName
+                        .toLowerCase()
+                        .contains(query.toLowerCase()),
+                orElse: () => null,
+              );
+
+      if (matchingContact != null &&
+          matchingContact.phones.isNotEmpty) {
+        final number = matchingContact.phones.first.number;
+        await speak(
+            "அழைக்கிறது ${matchingContact.displayName}");
+        // final DirectDialer dialer =
+            // await DirectDialer.instance;
+        // await dialer.dial(number);
+        await saveRecentNumber(number);
+      } else {
+
+
+
+
+
+        await speak("பরிచயம் கண்டுபிடிக்க முடியவில்லை");
+      }
+    } catch (e) {
+      debugPrint('Error in findAndDial: $e');
+    }
+  }
+
+  // ------------------------------------------------
+
+  List<Contact> get contacts {
+    return _contacts.where((c) {
+      final displayName = c.displayName;
+      final containsEnglish =
+          RegExp(r'[a-zA-Z]').hasMatch(displayName);
+      return isTamil ? !containsEnglish : containsEnglish;
+    }).toList();
   }
 
   @override
@@ -59,6 +139,13 @@ class _HomePageState extends State<HomePage> {
       title: Text('Caller'),
       actions: [
         languageButton(),
+        IconButton(
+          icon:
+              Icon(Icons.mic, size: 28, color: Colors.red),
+          onPressed: () async {
+            await startListening();
+          },
+        ),
       ],
     );
   }
@@ -102,11 +189,9 @@ class _HomePageState extends State<HomePage> {
   Widget allPage() {
     List<Contact> list = contacts.where((c) {
       String fullName = c.displayName;
-      // String firstLetter = fullName.characters.firstOrNull ?? '';
       return selectedAlphabet.isEmpty
           ? true
           : fullName.contains(selectedAlphabet);
-      // firstLetter == selectedAlphabet;
     }).toList();
     return Column(
       children: [
@@ -132,11 +217,11 @@ class _HomePageState extends State<HomePage> {
   Widget keyboard() {
     List<String> alphabets = [];
     for (Contact contact in contacts) {
-      String firstLetter = contact.displayName
-              .trim()
-              .characters
-              .firstOrNull ??
-          '';
+      String firstLetter =
+          contact.displayName.trim().isNotEmpty
+              ? contact.displayName.trim().characters.first
+              : '';
+
       if (firstLetter.isNotEmpty &&
           !alphabets.contains(firstLetter)) {
         alphabets.add(firstLetter);
@@ -173,7 +258,6 @@ class _HomePageState extends State<HomePage> {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: color,
-                // borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                     color:
                         Colors.grey.withValues(alpha: 0.2)),
@@ -203,43 +287,47 @@ class _HomePageState extends State<HomePage> {
               itemCount: list.length,
               itemBuilder: (context, int index) {
                 final Contact contact = list[index];
-                return Container(
-                  margin: const EdgeInsets.symmetric(
-                      vertical: 4),
-                  padding: EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(
-                        width: 0.25,
-                        color: Colors.yellow
-                            .withValues(alpha: 0.25),
-                      ),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Text(
-                        '${index + 1}. ',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
+                return GestureDetector(
+                  onTap: () =>
+                      findAndDial(contact.displayName),
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(
+                        vertical: 4),
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          width: 0.25,
+                          color: Colors.yellow
+                              .withValues(alpha: 0.25),
                         ),
                       ),
-                      Expanded(
-                        child: RichText(
-                          text: TextSpan(
-                            children: _highlightAlphabet(
-                                contact.displayName),
-                            style: TextStyle(
-                              fontSize: 22,
-                              color: Colors.white,
+                    ),
+                    child: Row(
+                      children: [
+                        Text(
+                          '${index + 1}. ',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                          ),
+                        ),
+                        Expanded(
+                          child: RichText(
+                            text: TextSpan(
+                              children: _highlightAlphabet(
+                                  contact.displayName),
+                              style: TextStyle(
+                                fontSize: 22,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      callButton(contact
-                          .phones.firstOrNull?.number),
-                    ],
+                        callButton(contact
+                            .phones.firstOrNull?.number),
+                      ],
+                    ),
                   ),
                 );
               },
@@ -252,19 +340,13 @@ class _HomePageState extends State<HomePage> {
     return CircleAvatar(
       backgroundColor: Colors.green.shade800,
       child: IconButton(
-        icon: Icon(
-          Icons.call,
-          size: 18,
-          color: Colors.white,
-        ),
+        icon:
+            Icon(Icons.call, size: 18, color: Colors.white),
         onPressed: () async {
-          if (kDebugMode) {
-            print('Dialing $number');
-          } else {
-            final DirectDialer dialer =
-                await DirectDialer.instance;
-            await dialer.dial(number);
-          }
+          await speak("அழைக்கிறது $number");
+          final DirectDialer dialer =
+              await DirectDialer.instance;
+          await dialer.dial(number);
           await saveRecentNumber(number);
         },
       ),
@@ -328,11 +410,9 @@ class _HomePageState extends State<HomePage> {
       await Permission.contacts.request();
       _isLoading = true;
       if (mounted) setState(() {});
-      final sw = Stopwatch()..start();
       _contacts = await FastContacts.getAllContacts();
-      sw.stop();
     } on PlatformException catch (e) {
-      'Failed to get contacts:\n${e.details}';
+      debugPrint('Failed to get contacts:\n${e.details}');
     } finally {
       _isLoading = false;
     }
@@ -340,7 +420,6 @@ class _HomePageState extends State<HomePage> {
     setState(() {});
   }
 
-  // Save recent number to SharedPreferences
   Future<void> saveRecentNumber(String number) async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -355,7 +434,6 @@ class _HomePageState extends State<HomePage> {
         'recent_numbers', _recentNumbers);
   }
 
-  // Load recent numbers from SharedPreferences
   Future<void> loadRecentNumbers() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
