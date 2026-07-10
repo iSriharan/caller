@@ -22,14 +22,16 @@ class _HomePageState extends State<HomePage> {
     return _contacts.where((c) {
       final displayName = c.displayName;
 
-      final containsEnglish = RegExp(r'[a-zA-Z]').hasMatch(displayName);
+      final containsEnglish =
+          RegExp(r'[a-zA-Z]').hasMatch(displayName);
       return isTamil ? !containsEnglish : containsEnglish;
     }).toList();
   }
 
   bool _isLoading = false;
   String selectedAlphabet = '';
-  final ScrollController _scrollController = ScrollController();
+  final ScrollController _scrollController =
+      ScrollController();
 
   // Add for recent calls
   List<String> _recentNumbers = [];
@@ -101,7 +103,9 @@ class _HomePageState extends State<HomePage> {
     List<Contact> list = contacts.where((c) {
       String fullName = c.displayName;
       // String firstLetter = fullName.characters.firstOrNull ?? '';
-      return selectedAlphabet.isEmpty ? true : fullName.contains(selectedAlphabet);
+      return selectedAlphabet.isEmpty
+          ? true
+          : fullName.contains(selectedAlphabet);
       // firstLetter == selectedAlphabet;
     }).toList();
     return Column(
@@ -114,7 +118,8 @@ class _HomePageState extends State<HomePage> {
 
   Widget recentsPage() {
     List<Contact> list = contacts.where((c) {
-      return c.phones.any((phone) => _recentNumbers.contains(phone.number));
+      return c.phones.any(
+          (phone) => _recentNumbers.contains(phone.number));
     }).toList();
 
     return Column(
@@ -127,8 +132,13 @@ class _HomePageState extends State<HomePage> {
   Widget keyboard() {
     List<String> alphabets = [];
     for (Contact contact in contacts) {
-      String firstLetter = contact.displayName.trim().characters.firstOrNull ?? '';
-      if (firstLetter.isNotEmpty && !alphabets.contains(firstLetter)) {
+      String firstLetter = contact.displayName
+              .trim()
+              .characters
+              .firstOrNull ??
+          '';
+      if (firstLetter.isNotEmpty &&
+          !alphabets.contains(firstLetter)) {
         alphabets.add(firstLetter);
       }
     }
@@ -141,7 +151,8 @@ class _HomePageState extends State<HomePage> {
       child: GridView.builder(
         shrinkWrap: true,
         physics: BouncingScrollPhysics(),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        gridDelegate:
+            SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 5,
           childAspectRatio: 2,
         ),
@@ -149,7 +160,9 @@ class _HomePageState extends State<HomePage> {
         itemBuilder: (BuildContext context, int index) {
           String a = alphabets[index];
           bool isSelected = selectedAlphabet == a;
-          Color color = isSelected ? Colors.purple : Colors.transparent;
+          Color color = isSelected
+              ? Colors.purple
+              : Colors.transparent;
           return InkWell(
             onTap: () {
               setState(() {
@@ -161,7 +174,9 @@ class _HomePageState extends State<HomePage> {
               decoration: BoxDecoration(
                 color: color,
                 // borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey.withOpacity(0.2)),
+                border: Border.all(
+                    color:
+                        Colors.grey.withValues(alpha: 0.2)),
               ),
               child: Text(
                 a,
@@ -189,13 +204,15 @@ class _HomePageState extends State<HomePage> {
               itemBuilder: (context, int index) {
                 final Contact contact = list[index];
                 return Container(
-                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  margin: const EdgeInsets.symmetric(
+                      vertical: 4),
                   padding: EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     border: Border(
                       bottom: BorderSide(
                         width: 0.25,
-                        color: Colors.yellow.withOpacity(0.25),
+                        color: Colors.yellow
+                            .withValues(alpha: 0.25),
                       ),
                     ),
                   ),
@@ -211,7 +228,8 @@ class _HomePageState extends State<HomePage> {
                       Expanded(
                         child: RichText(
                           text: TextSpan(
-                            children: _highlightAlphabet(contact.displayName),
+                            children: _highlightAlphabet(
+                                contact.displayName),
                             style: TextStyle(
                               fontSize: 22,
                               color: Colors.white,
@@ -219,7 +237,8 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ),
                       ),
-                      callButton(contact.phones.firstOrNull?.number),
+                      callButton(contact
+                          .phones.firstOrNull?.number),
                     ],
                   ),
                 );
@@ -242,7 +261,8 @@ class _HomePageState extends State<HomePage> {
           if (kDebugMode) {
             print('Dialing $number');
           } else {
-            final DirectDialer dialer = await DirectDialer.instance;
+            final DirectDialer dialer =
+                await DirectDialer.instance;
             await dialer.dial(number);
           }
           await saveRecentNumber(number);
@@ -261,8 +281,10 @@ class _HomePageState extends State<HomePage> {
       currentIndex: currentPage,
       onTap: pageController.jumpToPage,
       items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Recent'),
-        BottomNavigationBarItem(icon: Icon(Icons.list), label: 'All'),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.history), label: 'Recent'),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.list), label: 'All'),
       ],
     );
   }
@@ -271,7 +293,8 @@ class _HomePageState extends State<HomePage> {
     if (selectedAlphabet.isEmpty) {
       return [TextSpan(text: displayName)];
     }
-    final matches = RegExp(RegExp.escape(selectedAlphabet)).allMatches(displayName);
+    final matches = RegExp(RegExp.escape(selectedAlphabet))
+        .allMatches(displayName);
     if (matches.isEmpty) {
       return [TextSpan(text: displayName)];
     }
@@ -279,19 +302,23 @@ class _HomePageState extends State<HomePage> {
     int last = 0;
     for (final match in matches) {
       if (match.start > last) {
-        spans.add(TextSpan(text: displayName.substring(last, match.start)));
+        spans.add(TextSpan(
+            text:
+                displayName.substring(last, match.start)));
       }
       spans.add(TextSpan(
         text: displayName.substring(match.start, match.end),
         style: TextStyle(
-          backgroundColor: Colors.yellow.withOpacity(0.15),
+          backgroundColor:
+              Colors.yellow.withValues(alpha: 0.15),
           color: Colors.white,
         ),
       ));
       last = match.end;
     }
     if (last < displayName.length) {
-      spans.add(TextSpan(text: displayName.substring(last)));
+      spans
+          .add(TextSpan(text: displayName.substring(last)));
     }
     return spans;
   }
@@ -317,20 +344,23 @@ class _HomePageState extends State<HomePage> {
   Future<void> saveRecentNumber(String number) async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _recentNumbers.remove(number); // Remove if already exists
+      _recentNumbers
+          .remove(number); // Remove if already exists
       _recentNumbers.insert(0, number); // Add to start
       if (_recentNumbers.length > 50) {
         _recentNumbers = _recentNumbers.sublist(0, 50);
       }
     });
-    await prefs.setStringList('recent_numbers', _recentNumbers);
+    await prefs.setStringList(
+        'recent_numbers', _recentNumbers);
   }
 
   // Load recent numbers from SharedPreferences
   Future<void> loadRecentNumbers() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _recentNumbers = prefs.getStringList('recent_numbers') ?? [];
+      _recentNumbers =
+          prefs.getStringList('recent_numbers') ?? [];
     });
   }
 }
