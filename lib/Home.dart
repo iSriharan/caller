@@ -1,3 +1,4 @@
+import 'package:caller/Dialer.dart';
 import 'package:direct_dialer/direct_dialer.dart';
 import 'package:fast_contacts/fast_contacts.dart';
 import 'package:flutter/foundation.dart';
@@ -45,6 +46,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    
     return Scaffold(
       appBar: appBar(),
       body: body(),
@@ -80,21 +82,22 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget body() {
-    if (_isLoading) {
-      return Center(child: CircularProgressIndicator());
-    } else {
-      return PageView(
-        controller: pageController,
-        onPageChanged: (int i) async {
-          setState(() => currentPage = i);
-          if (i == 0) await loadRecentNumbers();
-        },
-        children: [
-          recentsPage(),
-          allPage(),
-        ],
-      );
-    }
+    return DialerPage();
+    // if (_isLoading) {
+    //   return Center(child: CircularProgressIndicator());
+    // } else {
+    //   return PageView(
+    //     controller: pageController,
+    //     onPageChanged: (int i) async {
+    //       setState(() => currentPage = i);
+    //       if (i == 0) await loadRecentNumbers();
+    //     },
+    //     children: [
+    //       recentsPage(),
+    //       allPage(),
+    //     ],
+    //   );
+    // }
   }
 
   Widget allPage() {
