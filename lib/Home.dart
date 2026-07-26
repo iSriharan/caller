@@ -46,7 +46,6 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    
     return Scaffold(
       appBar: appBar(),
       body: body(),
@@ -57,10 +56,10 @@ class _HomePageState extends State<HomePage> {
   AppBar appBar() {
     return AppBar(
       backgroundColor: Colors.black,
-      // title: Text('Caller'),
-      // actions: [
-      //   languageButton(),
-      // ],
+      title: Text('Caller'),
+      actions: [
+        languageButton(),
+      ],
     );
   }
 
@@ -83,22 +82,23 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget body() {
-    return DialerPage();
-    // if (_isLoading) {
-    //   return Center(child: CircularProgressIndicator());
-    // } else {
-    //   return PageView(
-    //     controller: pageController,
-    //     onPageChanged: (int i) async {
-    //       setState(() => currentPage = i);
-    //       if (i == 0) await loadRecentNumbers();
-    //     },
-    //     children: [
-    //       recentsPage(),
-    //       allPage(),
-    //     ],
-    //   );
-    // }
+    // return DialerPage();
+    if (_isLoading) {
+      return Center(child: CircularProgressIndicator());
+    } else {
+      return PageView(
+        controller: pageController,
+        onPageChanged: (int i) async {
+          setState(() => currentPage = i);
+          if (i == 0) await loadRecentNumbers();
+        },
+        children: [
+          recentsPage(),
+          allPage(),
+          dialpad()
+        ],
+      );
+    }
   }
 
   Widget allPage() {
@@ -109,9 +109,9 @@ class _HomePageState extends State<HomePage> {
       // firstLetter == selectedAlphabet;
     }).toList();
     return Column(
-      children: [
-        _listView(list),
-        keyboard(),
+      children: [_listView(list), keyboard(), 
+      
+     
       ],
     );
   }
@@ -126,6 +126,10 @@ class _HomePageState extends State<HomePage> {
         _listView(list),
       ],
     );
+  }
+
+  Widget dialpad() {
+    return DialerPage();
   }
 
   Widget keyboard() {
@@ -267,6 +271,7 @@ class _HomePageState extends State<HomePage> {
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Recent'),
         BottomNavigationBarItem(icon: Icon(Icons.list), label: 'All'),
+        BottomNavigationBarItem(icon: Icon(Icons.dialpad), label: 'Dialer')
       ],
     );
   }

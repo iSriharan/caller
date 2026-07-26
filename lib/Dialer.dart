@@ -12,18 +12,10 @@ class _DialerPageState extends State<DialerPage> {
   String typedVal = "";
 
   final List<String> numbers = [
-    '1',
-    '2',
-    '3',
-    '4',
-    '5',
-    '6',
-    '7',
-    '8',
-    '9',
-    '*',
-    '0',
-    '#',
+    '1','2','3',
+    '4','5','6',
+    '7','8','9',
+    '*','0','#',
   ];
 
   @override
@@ -34,10 +26,11 @@ class _DialerPageState extends State<DialerPage> {
         child: Column(
           children: [
             _display(),
-            const Spacer(),
-            _numpad(),
-            const SizedBox(height: 30),
+            const Divider(color: Colors.grey),
+            Expanded(child: _numpad()),   // ✅ fixes overflow
+            const SizedBox(height: 20),
             _bottomActions(),
+            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -46,12 +39,12 @@ class _DialerPageState extends State<DialerPage> {
 
   Widget _display() {
     return Container(
-      height: 150,
+      height: 120,
       alignment: Alignment.center,
       child: Text(
         typedVal.isEmpty ? 'Enter number' : typedVal,
         style: const TextStyle(
-          fontSize: 36,
+          fontSize: 32,
           color: Colors.white,
           letterSpacing: 2,
         ),
@@ -61,14 +54,14 @@ class _DialerPageState extends State<DialerPage> {
 
   Widget _numpad() {
     return GridView.builder(
-      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(), // ✅ keypad fixed
+      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
       itemCount: numbers.length,
-      gridDelegate:
-          const SliverGridDelegateWithFixedCrossAxisCount(
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
         mainAxisSpacing: 20,
         crossAxisSpacing: 20,
-        childAspectRatio: 1.2,
+        childAspectRatio: 1.1,
       ),
       itemBuilder: (context, index) {
         return _circle(numbers[index]);
@@ -89,7 +82,7 @@ class _DialerPageState extends State<DialerPage> {
         child: Text(
           n,
           style: const TextStyle(
-            fontSize: 28,
+            fontSize: 26,
             color: Colors.white,
             fontWeight: FontWeight.w500,
           ),
@@ -103,39 +96,36 @@ class _DialerPageState extends State<DialerPage> {
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         IconButton(
-          icon: const Icon(Icons.backspace,
-              color: Colors.white, size: 30),
+          icon: const Icon(Icons.backspace, color: Colors.white, size: 30),
           onPressed: backspacefn,
-          onLongPress: backspacefn,
+          onLongPress: () => setState(() => typedVal = ""),
         ),
         FloatingActionButton(
           backgroundColor: Colors.greenAccent.shade700,
           onPressed: () async {
-            DirectDialer plugIN =
-                await DirectDialer.instance;
-            await plugIN.dial(typedVal);
+            if (typedVal.isNotEmpty) {
+              DirectDialer plugIN = await DirectDialer.instance;
+              await plugIN.dial(typedVal);
+            }
           },
-          child: const Icon(Icons.call,
-              color: Colors.white, size: 28),
+          child: const Icon(Icons.call, color: Colors.white, size: 28),
         ),
       ],
     );
   }
-////FUNCTIONS
 
+  //// FUNCTIONS
   void backspacefn() {
     if (typedVal.isNotEmpty) {
       setState(() {
-        typedVal =
-            typedVal.substring(0, typedVal.length - 1);
+        typedVal = typedVal.substring(0, typedVal.length - 1);
       });
     }
   }
 
   void addDigitfn(String digit) {
     setState(() {
-      String upcomingRes = typedVal + digit;
-      typedVal = upcomingRes;
+      typedVal += digit;
     });
   }
 }
