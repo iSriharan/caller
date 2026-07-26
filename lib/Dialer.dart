@@ -1,3 +1,4 @@
+import 'package:direct_dialer/direct_dialer.dart';
 import 'package:flutter/material.dart';
 
 class DialerPage extends StatefulWidget {
@@ -109,8 +110,10 @@ class _DialerPageState extends State<DialerPage> {
         ),
         FloatingActionButton(
           backgroundColor: Colors.greenAccent.shade700,
-          onPressed: () {
-            // Call action here
+          onPressed: () async {
+            DirectDialer plugIN =
+                await DirectDialer.instance;
+            await plugIN.dial(typedVal);
           },
           child: const Icon(Icons.call,
               color: Colors.white, size: 28),
