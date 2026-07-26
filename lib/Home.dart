@@ -53,7 +53,10 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  AppBar appBar() {
+  AppBar? appBar() {
+    if (currentPage == 2) {
+      return null;
+    }
     return AppBar(
       backgroundColor: Colors.black,
       title: Text('Caller'),
@@ -92,11 +95,7 @@ class _HomePageState extends State<HomePage> {
           setState(() => currentPage = i);
           if (i == 0) await loadRecentNumbers();
         },
-        children: [
-          recentsPage(),
-          allPage(),
-          dialpad()
-        ],
+        children: [recentsPage(), allPage(), dialpad()],
       );
     }
   }
@@ -109,9 +108,9 @@ class _HomePageState extends State<HomePage> {
       // firstLetter == selectedAlphabet;
     }).toList();
     return Column(
-      children: [_listView(list), keyboard(), 
-      
-     
+      children: [
+        _listView(list),
+        keyboard(),
       ],
     );
   }

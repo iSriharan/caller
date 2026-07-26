@@ -21,6 +21,10 @@ class _DialerPageState extends State<DialerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar:AppBar(
+        backgroundColor: Colors.black,
+        // title: Center(child: Title(color: Colors.white, child: Text('Dialer'))),
+      ),
       backgroundColor: Colors.black,
       body: SafeArea(
         child: Column(
