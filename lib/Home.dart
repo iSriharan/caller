@@ -56,10 +56,11 @@ class _HomePageState extends State<HomePage> {
 
   AppBar appBar() {
     return AppBar(
-      title: Text('Caller'),
-      actions: [
-        languageButton(),
-      ],
+      backgroundColor: Colors.black,
+      // title: Text('Caller'),
+      // actions: [
+      //   languageButton(),
+      // ],
     );
   }
 

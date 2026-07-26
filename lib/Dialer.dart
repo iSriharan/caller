@@ -8,7 +8,9 @@ class DialerPage extends StatefulWidget {
 }
 
 class _DialerPageState extends State<DialerPage> {
-  List<String> numbers = [
+  String typedVal = "";
+
+  final List<String> numbers = [
     '1',
     '2',
     '3',
@@ -18,98 +20,119 @@ class _DialerPageState extends State<DialerPage> {
     '7',
     '8',
     '9',
-    '#',
+    '*',
     '0',
-    '*'
+    '#',
   ];
-
-  String txtfield = "";
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _body(),
       backgroundColor: Colors.black,
-    );
-  }
-
-  Widget _body() {
-    return Column(
-      children: [
-        _display(),
-        numpad(),
-      ],
+      body: SafeArea(
+        child: Column(
+          children: [
+            _display(),
+            const Spacer(),
+            _numpad(),
+            const SizedBox(height: 30),
+            _bottomActions(),
+          ],
+        ),
+      ),
     );
   }
 
   Widget _display() {
     return Container(
-        height: 180,
-        color: Colors.black,
-        alignment: Alignment.center,
-        child: Text(
-          txtfield.isEmpty ? 'Enter' : txtfield,
-          style: TextStyle(fontSize: 40, letterSpacing: 3),
-        ));
-  }
-
-  Widget numpad() {
-    // List<Widget> storage = [];
-    // for (int i = 0; i < numbers.length; i++) {
-    //   String n = numbers[i];
-    //   Widget key = Text(
-    //     n,
-    //     style: TextStyle(
-    //         fontSize: 40, color: Colors.greenAccent),
-    //   );
-    //   storage.add(key);
-    // }
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.only(top: 160),
-        child: GridView.count(
-          shrinkWrap: true,
-          crossAxisCount: 3,
-          mainAxisSpacing: 20,
-          crossAxisSpacing: 20,
-          childAspectRatio: 1.6,
-          children: numbers.map((n) {
-            return _circle(n);
-          }).toList(),
+      height: 150,
+      alignment: Alignment.center,
+      child: Text(
+        typedVal.isEmpty ? 'Enter number' : typedVal,
+        style: const TextStyle(
+          fontSize: 36,
+          color: Colors.white,
+          letterSpacing: 2,
         ),
       ),
+    );
+  }
+
+  Widget _numpad() {
+    return GridView.builder(
+      shrinkWrap: true,
+      itemCount: numbers.length,
+      gridDelegate:
+          const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        mainAxisSpacing: 20,
+        crossAxisSpacing: 20,
+        childAspectRatio: 1.2,
+      ),
+      itemBuilder: (context, index) {
+        return _circle(numbers[index]);
+      },
     );
   }
 
   Widget _circle(String n) {
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          txtfield += n;
-        });
-      },
-      child: SizedBox(
-        width: 80,
-        height: 80,
-        child: Container(
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.grey.shade800,
-            border: Border.all(
-              color: Colors.grey,
-            ),
-          ),
-          child: Text(
-            n,
-            style: const TextStyle(
-              fontSize: 25,
-              color: Colors.white,
-            ),
+      onTap: () => addDigitfn(n),
+      child: Container(
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.grey.shade900,
+          border: Border.all(color: Colors.grey.shade700),
+        ),
+        child: Text(
+          n,
+          style: const TextStyle(
+            fontSize: 28,
+            color: Colors.white,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ),
     );
+  }
+
+  Widget _bottomActions() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.backspace,
+              color: Colors.white, size: 30),
+          onPressed: backspacefn,
+          onLongPress: backspacefn,
+        ),
+        FloatingActionButton(
+          backgroundColor: Colors.greenAccent.shade700,
+          onPressed: () {
+            // Call action here
+          },
+          child: const Icon(Icons.call,
+              color: Colors.white, size: 28),
+        ),
+      ],
+    );
+  }
+////FUNCTIONS
+
+  void backspacefn() {
+    if (typedVal.isNotEmpty) {
+      setState(() {
+        typedVal =
+            typedVal.substring(0, typedVal.length - 1);
+      });
+    }
+  }
+
+  void addDigitfn(String digit) {
+    setState(() {
+      String upcomingRes = typedVal + digit;
+      typedVal = upcomingRes;
+    });
   }
 }
