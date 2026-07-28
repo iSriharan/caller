@@ -327,8 +327,8 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _recentNumbers.remove(number); // Remove if already exists
       _recentNumbers.insert(0, number); // Add to start
-      if (_recentNumbers.length > 50) {
-        _recentNumbers = _recentNumbers.sublist(0, 50);
+      if (_recentNumbers.length > 500) {
+        _recentNumbers = _recentNumbers.sublist(0, 500);
       }
     });
     await prefs.setStringList('recent_numbers', _recentNumbers);
