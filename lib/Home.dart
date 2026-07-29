@@ -19,6 +19,8 @@ class _HomePageState extends State<HomePage> {
   List<Contact> _contacts = const [];
   bool isTamil = true;
   bool showkeyboard = false;
+  Color txtclr = Color(0XFFF0F6F6);
+  Color keyboardBg = Color(0xFF0B131A);
 
   List<Contact> get contacts {
     return _contacts.where((c) {
@@ -59,7 +61,6 @@ class _HomePageState extends State<HomePage> {
       return null;
     }
     return AppBar(
-      backgroundColor: Colors.black,
       title: Center(child: Text('Caller')),
       leading: languageButton(),
       actions: [
@@ -75,7 +76,7 @@ class _HomePageState extends State<HomePage> {
         Icons.search,
         color: Colors.white,
       ),
-      tooltip: 'Search',
+      tooltip: 'Keyboard',
       onPressed: () {
         setState(() {
           showkeyboard = !showkeyboard;
@@ -128,8 +129,7 @@ class _HomePageState extends State<HomePage> {
     return Column(
       children: [
         _listView(list),
-        if (showkeyboard)
-        keyboard(),
+        if (showkeyboard) keyboard(),
       ],
     );
   }
@@ -163,7 +163,7 @@ class _HomePageState extends State<HomePage> {
 
     return Container(
       height: 350,
-      color: Colors.black,
+      color: keyboardBg,
       // color: const Color.fromARGB(255, 47, 1, 26),
       child: GridView.builder(
         shrinkWrap: true,
@@ -176,7 +176,7 @@ class _HomePageState extends State<HomePage> {
         itemBuilder: (BuildContext context, int index) {
           String a = alphabets[index];
           bool isSelected = selectedAlphabet == a;
-          Color color = isSelected ? Colors.purple : Colors.transparent;
+          Color color = isSelected ? Colors.green : Colors.transparent;
           return InkWell(
             onTap: () {
               setState(() {
@@ -241,7 +241,7 @@ class _HomePageState extends State<HomePage> {
                             children: _highlightAlphabet(contact.displayName),
                             style: TextStyle(
                               fontSize: 22,
-                              color: Colors.white,
+                              color: txtclr,
                             ),
                           ),
                         ),
@@ -279,19 +279,40 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget bottomNav() {
-    return BottomNavigationBar(
-      showSelectedLabels: false,
-      showUnselectedLabels: false,
-      selectedItemColor: Colors.white,
-      unselectedItemColor: Colors.grey,
-      backgroundColor: Colors.grey.shade900,
-      currentIndex: currentPage,
-      onTap: pageController.jumpToPage,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Recent'),
-        BottomNavigationBarItem(icon: Icon(Icons.list), label: 'All'),
-        BottomNavigationBarItem(icon: Icon(Icons.dialpad), label: 'Dialer')
-      ],
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey.shade900,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(30),
+          topRight: Radius.circular(30),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 10,
+            offset: Offset(0, -3),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(30),
+          topRight: Radius.circular(30), 
+        ),
+        child: BottomNavigationBar(
+          showSelectedLabels: false,
+          showUnselectedLabels: false,
+          selectedItemColor: Colors.white,
+          unselectedItemColor: Colors.grey.shade600,
+          currentIndex: currentPage,
+          onTap: pageController.jumpToPage,
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.history, size: 30), label: 'Recent'),
+            BottomNavigationBarItem(icon: Icon(Icons.list, size: 30), label: 'All'),
+            BottomNavigationBarItem(icon: Icon(Icons.dialpad, size: 28), label: 'Dialer'),
+          ],
+        ),
+      ),
     );
   }
 

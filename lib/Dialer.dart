@@ -12,26 +12,29 @@ class _DialerPageState extends State<DialerPage> {
   String typedVal = "";
 
   final List<String> numbers = [
-    '1','2','3',
-    '4','5','6',
-    '7','8','9',
-    '*','0','#',
+    '1',
+    '2',
+    '3',
+    '4',
+    '5',
+    '6',
+    '7',
+    '8',
+    '9',
+    '*',
+    '0',
+    '#',
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar:AppBar(
-        backgroundColor: Colors.black,
-        // title: Center(child: Title(color: Colors.white, child: Text('Dialer'))),
-      ),
-      backgroundColor: Colors.black,
       body: SafeArea(
         child: Column(
           children: [
             _display(),
             const Divider(color: Colors.grey),
-            Expanded(child: _numpad()),   // ✅ fixes overflow
+            Expanded(child: _numpad()), // ✅ fixes overflow
             const SizedBox(height: 20),
             _bottomActions(),
             const SizedBox(height: 20),
@@ -80,13 +83,13 @@ class _DialerPageState extends State<DialerPage> {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Colors.grey.shade900,
+          color: Colors.black54.withOpacity(0.10),
           border: Border.all(color: Colors.grey.shade700),
         ),
         child: Text(
           n,
           style: const TextStyle(
-            fontSize: 26,
+            fontSize: 30,
             color: Colors.white,
             fontWeight: FontWeight.w500,
           ),
