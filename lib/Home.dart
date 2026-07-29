@@ -18,6 +18,7 @@ class _HomePageState extends State<HomePage> {
   final PageController pageController = PageController();
   List<Contact> _contacts = const [];
   bool isTamil = true;
+  bool showkeyboard = false;
 
   List<Contact> get contacts {
     return _contacts.where((c) {
@@ -59,10 +60,27 @@ class _HomePageState extends State<HomePage> {
     }
     return AppBar(
       backgroundColor: Colors.black,
-      title: Text('Caller'),
+      title: Center(child: Text('Caller')),
+      leading: languageButton(),
       actions: [
-        languageButton(),
+        searchbutton(),
+        // languageButton(),
       ],
+    );
+  }
+
+  Widget searchbutton() {
+    return IconButton(
+      icon: Icon(
+        Icons.search,
+        color: Colors.white,
+      ),
+      tooltip: 'Search',
+      onPressed: () {
+        setState(() {
+          showkeyboard = !showkeyboard;
+        });
+      },
     );
   }
 
@@ -70,7 +88,7 @@ class _HomePageState extends State<HomePage> {
     return IconButton(
       icon: Icon(
         Icons.translate,
-        color: isTamil ? Colors.green : Colors.grey,
+        color: isTamil ? Colors.white : Colors.green,
       ),
       tooltip: isTamil ? 'Turn off Tamil' : 'Turn on Tamil',
       onPressed: () {
@@ -110,6 +128,7 @@ class _HomePageState extends State<HomePage> {
     return Column(
       children: [
         _listView(list),
+        if (showkeyboard)
         keyboard(),
       ],
     );
@@ -144,7 +163,8 @@ class _HomePageState extends State<HomePage> {
 
     return Container(
       height: 350,
-      color: const Color.fromARGB(255, 47, 1, 26),
+      color: Colors.black,
+      // color: const Color.fromARGB(255, 47, 1, 26),
       child: GridView.builder(
         shrinkWrap: true,
         physics: BouncingScrollPhysics(),
@@ -168,7 +188,7 @@ class _HomePageState extends State<HomePage> {
               decoration: BoxDecoration(
                 color: color,
                 // borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey.withOpacity(0.2)),
+                border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
               ),
               child: Text(
                 a,
@@ -202,7 +222,7 @@ class _HomePageState extends State<HomePage> {
                     border: Border(
                       bottom: BorderSide(
                         width: 0.25,
-                        color: Colors.yellow.withOpacity(0.25),
+                        color: Colors.yellow.withValues(alpha: 0.25),
                       ),
                     ),
                   ),
@@ -248,10 +268,10 @@ class _HomePageState extends State<HomePage> {
         onPressed: () async {
           if (kDebugMode) {
             print('Dialing $number');
-          } else {
-            final DirectDialer dialer = await DirectDialer.instance;
-            await dialer.dial(number);
           }
+          final DirectDialer dialer = await DirectDialer.instance;
+          await dialer.dial(number);
+
           await saveRecentNumber(number);
         },
       ),
@@ -292,7 +312,7 @@ class _HomePageState extends State<HomePage> {
       spans.add(TextSpan(
         text: displayName.substring(match.start, match.end),
         style: TextStyle(
-          backgroundColor: Colors.yellow.withOpacity(0.15),
+          backgroundColor: Colors.yellow.withValues(alpha: 0.15),
           color: Colors.white,
         ),
       ));
