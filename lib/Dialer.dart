@@ -53,7 +53,7 @@ class _DialerPageState extends State<DialerPage> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          typedVal.isEmpty ? 'Enter number' : typedVal,
+          typedVal.isEmpty ? "" : typedVal,
           style: const TextStyle(
             fontSize: 32,
             color: Colors.white,
