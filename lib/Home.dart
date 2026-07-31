@@ -17,6 +17,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final PageController pageController = PageController();
   List<Contact> _contacts = const [];
+ 
   bool isTamil = true;
   bool showkeyboard = false;
   Color txtclr = Color(0XFFF0F6F6);

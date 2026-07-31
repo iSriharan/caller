@@ -1,5 +1,6 @@
 import 'package:direct_dialer/direct_dialer.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class DialerPage extends StatefulWidget {
   const DialerPage({super.key});
@@ -10,7 +11,7 @@ class DialerPage extends StatefulWidget {
 
 class _DialerPageState extends State<DialerPage> {
   String typedVal = "";
-
+  String? clipboardNum;
   final List<String> numbers = [
     '1',
     '2',
@@ -34,7 +35,7 @@ class _DialerPageState extends State<DialerPage> {
           children: [
             _display(),
             const Divider(color: Colors.grey),
-            Expanded(child: _numpad()), // ✅ fixes overflow
+            Expanded(child: _numpad()), 
             const SizedBox(height: 20),
             _bottomActions(),
             const SizedBox(height: 20),
@@ -44,24 +45,43 @@ class _DialerPageState extends State<DialerPage> {
     );
   }
 
-  Widget _display() {
-    return Container(
-      height: 120,
-      alignment: Alignment.center,
-      child: Text(
-        typedVal.isEmpty ? 'Enter number' : typedVal,
-        style: const TextStyle(
-          fontSize: 32,
-          color: Colors.white,
-          letterSpacing: 2,
+ Widget _display() {
+  return Container(
+    height: 120,
+    alignment: Alignment.center,
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          typedVal.isEmpty ? 'Enter number' : typedVal,
+          style: const TextStyle(
+            fontSize: 32,
+            color: Colors.white,
+            letterSpacing: 2,
+          ),
         ),
-      ),
-    );
-  }
+        if (typedVal.isEmpty && clipboardNum != null)
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                typedVal = clipboardNum!;
+              });
+            },
+            style: TextButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              foregroundColor: Colors.white
+            ),
+            child: const Text("Paste"),
+          ),
+      ],
+    ),
+  );
+}
+
 
   Widget _numpad() {
     return GridView.builder(
-      physics: const NeverScrollableScrollPhysics(), // ✅ keypad fixed
+      physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
       itemCount: numbers.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -83,7 +103,7 @@ class _DialerPageState extends State<DialerPage> {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Colors.black54.withOpacity(0.10),
+          color: Colors.black54.withValues(alpha: 0.10),
           border: Border.all(color: Colors.grey.shade700),
         ),
         child: Text(
@@ -135,4 +155,20 @@ class _DialerPageState extends State<DialerPage> {
       typedVal += digit;
     });
   }
+Future<void> _checkClipboardForNumber() async {
+  final data = await Clipboard.getData('text/plain');
+  if (data != null && RegExp(r'^[\d+\-\s]+$').hasMatch(data.text!)) {
+    setState(() {
+      clipboardNum = data.text!;
+    });
+  }
+}
+
+@override
+void initState() {
+  super.initState();
+  _checkClipboardForNumber();
+}
+
+
 }
