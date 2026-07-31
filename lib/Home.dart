@@ -21,6 +21,7 @@ class _HomePageState extends State<HomePage> {
   bool showkeyboard = false;
   Color txtclr = Color(0XFFF0F6F6);
   Color keyboardBg = Color(0xFF0B131A);
+  Color whiter = Color(0XFFFFFFFF);
 
   List<Contact> get contacts {
     return _contacts.where((c) {
@@ -61,7 +62,7 @@ class _HomePageState extends State<HomePage> {
       return null;
     }
     return AppBar(
-      title: Center(child: Text('Caller')),
+      title: Center(child: Text('Caller',style: TextStyle(fontSize: 26))),
       leading: languageButton(),
       actions: [
         searchbutton(),
@@ -263,7 +264,7 @@ class _HomePageState extends State<HomePage> {
         icon: Icon(
           Icons.call,
           size: 18,
-          color: Colors.white,
+          color: whiter,
         ),
         onPressed: () async {
           if (kDebugMode) {
