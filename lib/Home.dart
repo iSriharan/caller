@@ -1,4 +1,5 @@
 import 'package:caller/Dialer.dart';
+import 'package:caller/contact_profile.dart';
 import 'package:direct_dialer/direct_dialer.dart';
 import 'package:fast_contacts/fast_contacts.dart';
 import 'package:flutter/foundation.dart';
@@ -207,17 +208,26 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _listView(List<Contact> list) {
-    return Expanded(
-      child: list.isEmpty
-          ? Center(child: Text('No contacts found'))
-          : ListView.builder(
-              physics: BouncingScrollPhysics(),
-              controller: _scrollController,
-              itemCount: list.length,
-              itemBuilder: (context, int index) {
-                final Contact contact = list[index];
-                return Container(
+ Widget _listView(List<Contact> list) {
+  return Expanded(
+    child: list.isEmpty
+        ? Center(child: Text('No contacts found'))
+        : ListView.builder(
+            physics: BouncingScrollPhysics(),
+            controller: _scrollController,
+            itemCount: list.length,
+            itemBuilder: (context, int index) {
+              final Contact contact = list[index];
+              return InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ContactProfilePage(contact: contact),
+                    ),
+                  );
+                },
+                child: Container(
                   margin: const EdgeInsets.symmetric(vertical: 4),
                   padding: EdgeInsets.all(8),
                   decoration: BoxDecoration(
@@ -251,11 +261,13 @@ class _HomePageState extends State<HomePage> {
                       callButton(contact.phones.firstOrNull?.number),
                     ],
                   ),
-                );
-              },
-            ),
-    );
-  }
+                ),
+              );
+            },
+          ),
+  );
+}
+
 
   Widget callButton(String? number) {
     if (number == null) return SizedBox.shrink();
