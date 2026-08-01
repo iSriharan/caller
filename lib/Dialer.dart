@@ -1,8 +1,8 @@
 import 'package:direct_dialer/direct_dialer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:image_picker/image_picker.dart';
 
 class DialerPage extends StatefulWidget {
   const DialerPage({super.key});
@@ -39,6 +39,14 @@ class _DialerPageState extends State<DialerPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        title: Padding(
+            padding: const EdgeInsets.only(left: 60),
+            child: Center(
+              child: const Text(
+                "Dialer",
+                style: TextStyle(fontSize: 25),
+              ),
+            )),
         actions: [imagesearch()],
       ),
       body: SafeArea(
@@ -59,7 +67,7 @@ class _DialerPageState extends State<DialerPage> {
   /// Display area
   Widget _display() {
     return Container(
-      height: 120,
+      height: 135,
       alignment: Alignment.center,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -92,41 +100,43 @@ class _DialerPageState extends State<DialerPage> {
 
   /// Image search icon
   Widget imagesearch() {
-  return IconButton(
-    icon: const Icon(Icons.image_search, color: Colors.white),
-    tooltip: 'Image Search',
-    onPressed: () {
-      showModalBottomSheet(
-        context: context,
-        builder: (context) {
-          return SafeArea(
-            child: Wrap(
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.photo_library),
-                  title: const Text("Gallery"),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _scanImageForPhoneNumber(ImageSource.gallery);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.camera_alt),
-                  title: const Text("Camera"),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _scanImageForPhoneNumber(ImageSource.camera);
-                  },
-                ),
-              ],
-            ),
-          );
-        },
-      );
-    },
-  );
-}
-
+    return IconButton(
+      icon: const Icon(Icons.image_search, color: Colors.white),
+      tooltip: 'Image Search',
+      onPressed: () {
+        showModalBottomSheet(
+          context: context,
+          builder: (context) {
+            return SafeArea(
+              child: Wrap(
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.photo_library),
+                    title: const Text(
+                      "Gallery",
+                      style: TextStyle(fontSize: 16),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _scanImageForPhoneNumber(ImageSource.gallery);
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.camera_alt),
+                    title: const Text("Camera", style: TextStyle(fontSize: 16)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _scanImageForPhoneNumber(ImageSource.camera);
+                    },
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
 
   /// Number pad
   Widget _numpad() {
@@ -153,7 +163,7 @@ class _DialerPageState extends State<DialerPage> {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Colors.black54.withOpacity(0.1),
+          color: Colors.black54.withValues(alpha: 0.1),
           border: Border.all(color: Colors.grey.shade700),
         ),
         child: Text(
