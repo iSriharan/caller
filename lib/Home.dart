@@ -68,7 +68,7 @@ class _HomePageState extends State<HomePage> {
       leading: languageButton(),
       actions: [
         searchbutton(),
-        // languageButton(),
+        imagesearch(),
       ],
     );
   }
@@ -105,6 +105,24 @@ class _HomePageState extends State<HomePage> {
       },
     );
   }
+
+
+
+Widget imagesearch() {
+    return IconButton(
+      icon: Icon(
+        Icons.image_search,
+        color: Colors.white,
+      ),
+      tooltip: 'Image Search',
+      onPressed: () {
+        // Implement image search functionality here
+      },
+    );
+  }
+
+  
+
 
   Widget body() {
     // return DialerPage();

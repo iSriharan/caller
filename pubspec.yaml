@@ -16,6 +16,11 @@ dependencies:
   flutter_native_splash: 2.4.4
   shared_preferences: ^2.0.0
 
+
+  #OCR
+  google_mlkit_text_recognition: ^0.11.0
+  image_picker: ^1.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
