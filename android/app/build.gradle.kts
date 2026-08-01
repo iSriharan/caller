@@ -29,11 +29,11 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.example.largedialer"
-        minSdkVersion 21
-        targetSdk 36
-        versionCode 2
-        versionName "2.0.0"
+        applicationId = "com.example.largedialer"
+        minSdk = flutter.minSdkVersion
+        targetSdk = 36
+        versionCode = 2
+        versionName = "2.0.0"
     }
 
     signingConfigs {

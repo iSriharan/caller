@@ -68,7 +68,7 @@ class _HomePageState extends State<HomePage> {
       leading: languageButton(),
       actions: [
         searchbutton(),
-        imagesearch(),
+       
       ],
     );
   }
@@ -108,18 +108,7 @@ class _HomePageState extends State<HomePage> {
 
 
 
-Widget imagesearch() {
-    return IconButton(
-      icon: Icon(
-        Icons.image_search,
-        color: Colors.white,
-      ),
-      tooltip: 'Image Search',
-      onPressed: () {
-        // Implement image search functionality here
-      },
-    );
-  }
+
 
   
 
