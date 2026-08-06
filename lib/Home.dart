@@ -105,14 +105,7 @@ class _HomePageState extends State<HomePage> {
       },
     );
   }
-
-
-
-
-
   
-
-
   Widget body() {
     // return DialerPage();
     if (_isLoading) {
