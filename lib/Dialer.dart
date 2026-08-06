@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:image_cropper/image_cropper.dart';
 
 class DialerPage extends StatefulWidget {
   const DialerPage({super.key});
@@ -15,19 +16,9 @@ class _DialerPageState extends State<DialerPage> {
   String typedVal = "";
   String? clipboardNum;
   String? lastClipboardvalue;
+
   final List<String> numbers = [
-    '1',
-    '2',
-    '3',
-    '4',
-    '5',
-    '6',
-    '7',
-    '8',
-    '9',
-    '*',
-    '0',
-    '#',
+    '1','2','3','4','5','6','7','8','9','*','0','#',
   ];
 
   @override
@@ -40,14 +31,9 @@ class _DialerPageState extends State<DialerPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Padding(
-            padding: const EdgeInsets.only(left: 60),
-            child: Center(
-              child: const Text(
-                "Dialer",
-                style: TextStyle(fontSize: 25),
-              ),
-            )),
+        title: const Center(
+          child: Text("Dialer", style: TextStyle(fontSize: 25)),
+        ),
         actions: [imagesearch()],
       ),
       body: SafeArea(
@@ -83,7 +69,7 @@ class _DialerPageState extends State<DialerPage> {
           ),
           if (typedVal.isEmpty && clipboardNum != null)
             ElevatedButton(
-              onPressed:_onPaste,
+              onPressed: _onPaste,
               style: TextButton.styleFrom(
                 backgroundColor: Colors.transparent,
                 foregroundColor: Colors.white,
@@ -95,42 +81,13 @@ class _DialerPageState extends State<DialerPage> {
     );
   }
 
-  /// Image search icon
+  /// Camera icon
   Widget imagesearch() {
     return IconButton(
       icon: const Icon(Icons.photo_camera_outlined, color: Colors.white),
       tooltip: 'Image Search',
       onPressed: () {
-        showModalBottomSheet(
-          context: context,
-          builder: (context) {
-            return SafeArea(
-              child: Wrap(
-                children: [
-                  ListTile(
-                    leading: const Icon(Icons.photo_library),
-                    title: const Text(
-                      "Gallery",
-                      style: TextStyle(fontSize: 16),
-                    ),
-                    onTap: () {
-                      Navigator.pop(context);
-                      _scanImageForPhoneNumber(ImageSource.gallery);
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.camera_alt),
-                    title: const Text("Camera", style: TextStyle(fontSize: 16)),
-                    onTap: () {
-                      Navigator.pop(context);
-                      _scanImageForPhoneNumber(ImageSource.camera);
-                    },
-                  ),
-                ],
-              ),
-            );
-          },
-        );
+        _scanImageForPhoneNumber();
       },
     );
   }
@@ -148,30 +105,26 @@ class _DialerPageState extends State<DialerPage> {
         childAspectRatio: 1.1,
       ),
       itemBuilder: (context, index) {
-        return _circle(numbers[index]);
-      },
-    );
-  }
-
-  Widget _circle(String n) {
-    return GestureDetector(
-      onTap: () => addDigitfn(n),
-      child: Container(
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.black54.withValues(alpha: 0.1),
-          border: Border.all(color: Colors.grey.shade700),
-        ),
-        child: Text(
-          n,
-          style: const TextStyle(
-            fontSize: 30,
-            color: Colors.white,
-            fontWeight: FontWeight.w500,
+        return GestureDetector(
+          onTap: () => addDigitfn(numbers[index]),
+          child: Container(
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.black54.withOpacity(0.1),
+              border: Border.all(color: Colors.grey.shade700),
+            ),
+            child: Text(
+              numbers[index],
+              style: const TextStyle(
+                fontSize: 30,
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -217,7 +170,9 @@ class _DialerPageState extends State<DialerPage> {
   Future<void> _checkClipboardForNumber() async {
     final data = await Clipboard.getData('text/plain');
     final text = data?.text;
-    if (text != null && RegExp(r'^[\d+\-\s]+$').hasMatch(text) && text != lastClipboardvalue) {
+    if (text != null &&
+        RegExp(r'^[\d+\-\s]+$').hasMatch(text) &&
+        text != lastClipboardvalue) {
       setState(() {
         clipboardNum = text;
         lastClipboardvalue = text;
@@ -227,7 +182,6 @@ class _DialerPageState extends State<DialerPage> {
 
   void _onPaste() {
     if (clipboardNum != null) {
-      
       setState(() {
         typedVal = clipboardNum!;
         clipboardNum = null;
@@ -235,20 +189,31 @@ class _DialerPageState extends State<DialerPage> {
     }
   }
 
-  /// OCR function
-  Future<void> _scanImageForPhoneNumber(ImageSource source) async {
+  /// OCR with cropper
+  Future<void> _scanImageForPhoneNumber() async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: source);
+    final pickedFile = await picker.pickImage(source: ImageSource.camera);
 
     if (pickedFile == null) return;
 
-    final inputImage = InputImage.fromFilePath(pickedFile.path);
+    // Crop the image
+    final croppedFile = await ImageCropper().cropImage(
+      sourcePath: pickedFile.path,
+     aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+      uiSettings: [
+        AndroidUiSettings(toolbarTitle: 'Crop Number'),
+        IOSUiSettings(title: 'Crop Number'),
+      ],
+    );
+
+    if (croppedFile == null) return;
+
+    final inputImage = InputImage.fromFilePath(croppedFile.path);
     final textRecognizer = TextRecognizer();
     final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
 
     final text = recognizedText.text;
     final phoneRegex = RegExp(r'(\+?\d[\d\s\-\(\)]{6,})');
-
     final matches = phoneRegex.allMatches(text);
 
     if (matches.isNotEmpty) {
