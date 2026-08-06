@@ -40,6 +40,7 @@ class _ContactProfilePageState extends State<ContactProfilePage> {
         child: CircleAvatar(
           radius: 50,
           backgroundColor: Colors.green,
+          foregroundColor:Colors.red,
           child: Text(
             widget.contact.displayName.isNotEmpty ? widget.contact.displayName[0] : '',
             style: const TextStyle(fontSize: 40, color: Colors.white),

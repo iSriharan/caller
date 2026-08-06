@@ -14,6 +14,7 @@ class DialerPage extends StatefulWidget {
 class _DialerPageState extends State<DialerPage> {
   String typedVal = "";
   String? clipboardNum;
+  String? lastClipboardvalue;
   final List<String> numbers = [
     '1',
     '2',
@@ -82,11 +83,7 @@ class _DialerPageState extends State<DialerPage> {
           ),
           if (typedVal.isEmpty && clipboardNum != null)
             ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  typedVal = clipboardNum!;
-                });
-              },
+              onPressed:_onPaste,
               style: TextButton.styleFrom(
                 backgroundColor: Colors.transparent,
                 foregroundColor: Colors.white,
@@ -101,7 +98,7 @@ class _DialerPageState extends State<DialerPage> {
   /// Image search icon
   Widget imagesearch() {
     return IconButton(
-      icon: const Icon(Icons.image_search, color: Colors.white),
+      icon: const Icon(Icons.photo_camera_outlined, color: Colors.white),
       tooltip: 'Image Search',
       onPressed: () {
         showModalBottomSheet(
@@ -219,9 +216,21 @@ class _DialerPageState extends State<DialerPage> {
 
   Future<void> _checkClipboardForNumber() async {
     final data = await Clipboard.getData('text/plain');
-    if (data != null && RegExp(r'^[\d+\-\s]+$').hasMatch(data.text!)) {
+    final text = data?.text;
+    if (text != null && RegExp(r'^[\d+\-\s]+$').hasMatch(text) && text != lastClipboardvalue) {
       setState(() {
-        clipboardNum = data.text!;
+        clipboardNum = text;
+        lastClipboardvalue = text;
+      });
+    }
+  }
+
+  void _onPaste() {
+    if (clipboardNum != null) {
+      
+      setState(() {
+        typedVal = clipboardNum!;
+        clipboardNum = null;
       });
     }
   }
@@ -246,7 +255,7 @@ class _DialerPageState extends State<DialerPage> {
       final number = matches.first.group(0);
       if (number != null) {
         setState(() {
-          typedVal = number; // paste into dialer field
+          typedVal = number;
         });
       }
     }
