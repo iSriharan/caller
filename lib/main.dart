@@ -19,14 +19,13 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Caller',
       theme: ThemeData.dark(useMaterial3: false).copyWith(
-        scaffoldBackgroundColor: appbar,
-        appBarTheme: AppBarTheme(
-          backgroundColor: appbar,
-        ),
-        bottomNavigationBarTheme: BottomNavigationBarThemeData(
-          backgroundColor: btmclr,
-        ),
-      ),
+          scaffoldBackgroundColor: appbar,
+          appBarTheme: AppBarTheme(
+            backgroundColor: appbar,
+          ),
+          bottomNavigationBarTheme: BottomNavigationBarThemeData(
+            backgroundColor: btmclr,
+          )),
       home: HomePage(),
     );
   }
