@@ -2,8 +2,7 @@ import 'package:direct_dialer/direct_dialer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:image_cropper/image_cropper.dart';
+import 'package:camera/camera.dart';
 
 class DialerPage extends StatefulWidget {
   const DialerPage({super.key});
@@ -16,6 +15,9 @@ class _DialerPageState extends State<DialerPage> {
   String typedVal = "";
   String? clipboardNum;
   String? lastClipboardvalue;
+
+  CameraController? _cameraController;
+  bool _cameraActive = false;
 
   final List<String> numbers = [
     '1',
@@ -36,6 +38,25 @@ class _DialerPageState extends State<DialerPage> {
   void initState() {
     super.initState();
     _checkClipboardForNumber();
+    _initCamera();
+  }
+
+  Future<void> _initCamera() async {
+    final cameras = await availableCameras();
+    final firstCamera = cameras.first;
+    _cameraController = CameraController(
+      firstCamera,
+      ResolutionPreset.medium,
+      enableAudio: false,
+    );
+    await _cameraController!.initialize();
+    setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _cameraController?.dispose();
+    super.dispose();
   }
 
   @override
@@ -62,30 +83,45 @@ class _DialerPageState extends State<DialerPage> {
     );
   }
 
-  /// Display area
+  /// Display area with camera preview
   Widget _display() {
     return Container(
       height: 135,
       alignment: Alignment.center,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Stack(
         children: [
-          Text(
-            typedVal.isEmpty ? "" : typedVal,
-            style: const TextStyle(
-              fontSize: 32,
-              color: Colors.white,
-              letterSpacing: 2,
+          // Camera preview fills the whole rectangle
+          if (_cameraActive &&
+              _cameraController != null &&
+              _cameraController!.value.isInitialized)
+            Positioned.fill(
+              child: CameraPreview(_cameraController!),
+            ),
+
+          // Overlay recognized number
+          Center(
+            child: Text(
+              typedVal.isEmpty ? "" : typedVal,
+              style: const TextStyle(
+                fontSize: 32,
+                color: Colors.white,
+                letterSpacing: 2,
+                backgroundColor: Colors.black54,
+              ),
             ),
           ),
+
+          // Paste button when typedVal is empty
           if (typedVal.isEmpty && clipboardNum != null)
-            ElevatedButton(
-              onPressed: _onPaste,
-              style: TextButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                foregroundColor: Colors.white,
+            Center(
+              child: ElevatedButton(
+                onPressed: _onPaste,
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text("Paste"),
               ),
-              child: const Text("Paste"),
             ),
         ],
       ),
@@ -96,9 +132,15 @@ class _DialerPageState extends State<DialerPage> {
   Widget imagesearch() {
     return IconButton(
       icon: const Icon(Icons.photo_camera_outlined, color: Colors.white),
-      tooltip: 'Image Search',
-      onPressed: () {
-        // _scanImageForPhoneNumber();
+      tooltip: 'Scan Number',
+      onPressed: () async {
+        setState(() => _cameraActive = !_cameraActive);
+        if (_cameraActive) {
+          // Capture and OCR after short delay
+          await Future.delayed(const Duration(seconds: 20000));
+          await _captureAndScan();
+          setState(() => _cameraActive = false);
+        }
       },
     );
   }
@@ -142,7 +184,7 @@ class _DialerPageState extends State<DialerPage> {
   /// Bottom actions
   Widget _bottomActions() {
     return SizedBox(
-      height: 60,
+      height: 70,
       child: Stack(
         alignment: Alignment.center,
         children: [
@@ -157,15 +199,16 @@ class _DialerPageState extends State<DialerPage> {
             child: const Icon(Icons.call, color: Colors.white, size: 28),
           ),
           if (typedVal.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(left: 190),
+            Positioned(
+              right: 16,
+              bottom: 0,
               child: IconButton(
                 icon:
                     const Icon(Icons.backspace, color: Colors.white, size: 30),
                 onPressed: backspacefn,
                 onLongPress: () => setState(() => typedVal = ""),
               ),
-            )
+            ),
         ],
       ),
     );
@@ -208,26 +251,13 @@ class _DialerPageState extends State<DialerPage> {
     }
   }
 
-  /// OCR with cropper
-  Future<void> _scanImageForPhoneNumber() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.camera);
+  /// Capture frame and OCR
+  Future<void> _captureAndScan() async {
+    if (_cameraController == null || !_cameraController!.value.isInitialized)
+      return;
 
-    if (pickedFile == null) return;
-
-    // Crop the image
-    final croppedFile = await ImageCropper().cropImage(
-      sourcePath: pickedFile.path,
-      aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
-      uiSettings: [
-        AndroidUiSettings(toolbarTitle: 'Crop Number'),
-        IOSUiSettings(title: 'Crop Number'),
-      ],
-    );
-
-    if (croppedFile == null) return;
-
-    final inputImage = InputImage.fromFilePath(croppedFile.path);
+    final image = await _cameraController!.takePicture();
+    final inputImage = InputImage.fromFilePath(image.path);
     final textRecognizer = TextRecognizer();
     final RecognizedText recognizedText =
         await textRecognizer.processImage(inputImage);
@@ -239,8 +269,9 @@ class _DialerPageState extends State<DialerPage> {
     if (matches.isNotEmpty) {
       final number = matches.first.group(0);
       if (number != null) {
+        final cleanNumber = number.replaceAll(RegExp(r'[^0-9+]'), '');
         setState(() {
-          typedVal = number;
+          typedVal = cleanNumber;
         });
       }
     }
