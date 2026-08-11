@@ -18,7 +18,18 @@ class _DialerPageState extends State<DialerPage> {
   String? lastClipboardvalue;
 
   final List<String> numbers = [
-    '1','2','3','4','5','6','7','8','9','*','0','#',
+    '1',
+    '2',
+    '3',
+    '4',
+    '5',
+    '6',
+    '7',
+    '8',
+    '9',
+    '*',
+    '0',
+    '#',
   ];
 
   @override
@@ -87,7 +98,7 @@ class _DialerPageState extends State<DialerPage> {
       icon: const Icon(Icons.photo_camera_outlined, color: Colors.white),
       tooltip: 'Image Search',
       onPressed: () {
-        _scanImageForPhoneNumber();
+        // _scanImageForPhoneNumber();
       },
     );
   }
@@ -105,7 +116,7 @@ class _DialerPageState extends State<DialerPage> {
         childAspectRatio: 1.1,
       ),
       itemBuilder: (context, index) {
-        return GestureDetector(
+        return InkWell(
           onTap: () => addDigitfn(numbers[index]),
           child: Container(
             alignment: Alignment.center,
@@ -130,25 +141,33 @@ class _DialerPageState extends State<DialerPage> {
 
   /// Bottom actions
   Widget _bottomActions() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        IconButton(
-          icon: const Icon(Icons.backspace, color: Colors.white, size: 30),
-          onPressed: backspacefn,
-          onLongPress: () => setState(() => typedVal = ""),
-        ),
-        FloatingActionButton(
-          backgroundColor: Colors.greenAccent.shade700,
-          onPressed: () async {
-            if (typedVal.isNotEmpty) {
-              DirectDialer plugIN = await DirectDialer.instance;
-              await plugIN.dial(typedVal);
-            }
-          },
-          child: const Icon(Icons.call, color: Colors.white, size: 28),
-        ),
-      ],
+    return SizedBox(
+      height: 60,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          FloatingActionButton(
+            backgroundColor: Colors.greenAccent.shade700,
+            onPressed: () async {
+              if (typedVal.isNotEmpty) {
+                DirectDialer plugIN = await DirectDialer.instance;
+                await plugIN.dial(typedVal);
+              }
+            },
+            child: const Icon(Icons.call, color: Colors.white, size: 28),
+          ),
+          if (typedVal.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(left: 190),
+              child: IconButton(
+                icon:
+                    const Icon(Icons.backspace, color: Colors.white, size: 30),
+                onPressed: backspacefn,
+                onLongPress: () => setState(() => typedVal = ""),
+              ),
+            )
+        ],
+      ),
     );
   }
 
@@ -199,7 +218,7 @@ class _DialerPageState extends State<DialerPage> {
     // Crop the image
     final croppedFile = await ImageCropper().cropImage(
       sourcePath: pickedFile.path,
-     aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+      aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
       uiSettings: [
         AndroidUiSettings(toolbarTitle: 'Crop Number'),
         IOSUiSettings(title: 'Crop Number'),
@@ -210,7 +229,8 @@ class _DialerPageState extends State<DialerPage> {
 
     final inputImage = InputImage.fromFilePath(croppedFile.path);
     final textRecognizer = TextRecognizer();
-    final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
+    final RecognizedText recognizedText =
+        await textRecognizer.processImage(inputImage);
 
     final text = recognizedText.text;
     final phoneRegex = RegExp(r'(\+?\d[\d\s\-\(\)]{6,})');
