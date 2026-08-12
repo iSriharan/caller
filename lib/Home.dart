@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'keyboard.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -18,9 +19,9 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final PageController pageController = PageController();
   List<Contact> _contacts = const [];
- 
+
   bool isTamil = true;
-  bool showkeyboard = false;
+
   Color txtclr = Color(0XFFF0F6F6);
   Color keyboardBg = Color(0xFF0B131A);
   Color whiter = Color(0XFFFFFFFF);
@@ -53,37 +54,31 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: appBar(),
       body: body(),
       bottomNavigationBar: bottomNav(),
     );
   }
 
-  AppBar? appBar() {
-    if (currentPage == 2) {
-      return null;
-    }
+  /// AppBar used by recents and all-contacts pages (not dialer).
+  PreferredSizeWidget _pageAppBar() {
     return AppBar(
-      title: Center(child: Text('Caller',style: TextStyle(fontSize: 26))),
+      title: const Center(
+        child: Text('Caller', style: TextStyle(fontSize: 26)),
+      ),
       leading: languageButton(),
-      actions: [
-        searchbutton(),
-       
-      ],
+      actions: [searchicon()],
     );
   }
 
-  Widget searchbutton() {
+  Widget searchicon() {
     return IconButton(
-      icon: Icon(
-        Icons.search,
-        color: Colors.white,
-      ),
-      tooltip: 'Keyboard',
+      icon: const Icon(Icons.search),
+      tooltip: 'Open Keyboard',
       onPressed: () {
-        setState(() {
-          showkeyboard = !showkeyboard;
-        });
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => Keyboard()),
+        );
       },
     );
   }
@@ -100,12 +95,13 @@ class _HomePageState extends State<HomePage> {
           isTamil = !isTamil;
           selectedAlphabet = '';
           pageController.jumpToPage(1);
-          _scrollController.jumpTo(0);
+
+          if (_scrollController.hasClients) _scrollController.jumpTo(0);
         });
       },
     );
   }
-  
+
   Widget body() {
     // return DialerPage();
     if (_isLoading) {
@@ -122,18 +118,113 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  /// Extracts unique Tamil first-characters from all contacts.
+  List<String> get tamilAlphabets {
+    final Set<String> chars = {};
+    for (final contact in contacts) {
+      final name = contact.displayName.trim();
+      if (name.isEmpty) continue;
+      final firstChar = name.characters.first;
+      if (!RegExp(r'[a-zA-Z]').hasMatch(firstChar)) {
+        chars.add(firstChar);
+      }
+    }
+    final sorted = chars.toList()..sort();
+    return sorted;
+  }
+
+  /// Extracts unique English first-letters (A–Z) from all contacts.
+  List<String> get englishAlphabets {
+    final Set<String> chars = {};
+    for (final contact in contacts) {
+      final name = contact.displayName.trim();
+      if (name.isEmpty) continue;
+      final firstChar = name.characters.first;
+      if (RegExp(r'[a-zA-Z]').hasMatch(firstChar)) {
+        chars.add(firstChar.toUpperCase());
+      }
+    }
+    final sorted = chars.toList()..sort();
+    return sorted;
+  }
+
   Widget allPage() {
     List<Contact> list = contacts.where((c) {
-      String fullName = c.displayName;
-      // String firstLetter = fullName.characters.firstOrNull ?? '';
-      return selectedAlphabet.isEmpty ? true : fullName.contains(selectedAlphabet);
-      // firstLetter == selectedAlphabet;
+      if (selectedAlphabet.isEmpty) return true;
+      final firstChar = c.displayName.trim().characters.firstOrNull ?? '';
+      if (isTamil) {
+        return firstChar == selectedAlphabet;
+      } else {
+        return firstChar.toUpperCase() == selectedAlphabet;
+      }
     }).toList();
+
+    final alphabets = isTamil ? tamilAlphabets : englishAlphabets;
+
     return Column(
       children: [
-        _listView(list),
-        if (showkeyboard) keyboard(),
+        _pageAppBar(),
+        Expanded(
+          child: Row(
+            children: [
+              _alphabetSidebar(alphabets),
+              Expanded(
+                child: Column(
+                  children: [
+                    _listView(list),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
+    );
+  }
+
+  Widget _alphabetSidebar(List<String> alphabets) {
+    if (alphabets.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      width: 42,
+      color: keyboardBg,
+      child: ListView.builder(
+        physics: const BouncingScrollPhysics(),
+        itemCount: alphabets.length,
+        itemBuilder: (context, index) {
+          final char = alphabets[index];
+          final isSelected = selectedAlphabet == char;
+          return InkWell(
+            onTap: () {
+              setState(() {
+                selectedAlphabet = isSelected ? '' : char;
+                if (_scrollController.hasClients) _scrollController.jumpTo(0);
+              });
+            },
+            child: Container(
+              height: 42,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: isSelected ? Colors.green : Colors.transparent,
+                border: Border(
+                  bottom: BorderSide(
+                    color: Colors.grey.withValues(alpha: 0.2),
+                    width: 0.5,
+                  ),
+                ),
+              ),
+              child: Text(
+                char,
+                style: TextStyle(
+                  fontSize: 18,
+                  color: isSelected ? Colors.white : Colors.white70,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -144,7 +235,14 @@ class _HomePageState extends State<HomePage> {
 
     return Column(
       children: [
-        _listView(list),
+        _pageAppBar(),
+        Expanded(
+          child: Column(
+            children: [
+              _listView(list),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -153,121 +251,65 @@ class _HomePageState extends State<HomePage> {
     return DialerPage();
   }
 
-  Widget keyboard() {
-    List<String> alphabets = [];
-    for (Contact contact in contacts) {
-      String firstLetter = contact.displayName.trim().characters.firstOrNull ?? '';
-      if (firstLetter.isNotEmpty && !alphabets.contains(firstLetter)) {
-        alphabets.add(firstLetter);
-      }
-    }
-
-    alphabets.sort();
-
-    return Container(
-      height: 350,
-      color: keyboardBg,
-      // color: const Color.fromARGB(255, 47, 1, 26),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: BouncingScrollPhysics(),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 5,
-          childAspectRatio: 2,
-        ),
-        itemCount: alphabets.length,
-        itemBuilder: (BuildContext context, int index) {
-          String a = alphabets[index];
-          bool isSelected = selectedAlphabet == a;
-          Color color = isSelected ? Colors.green : Colors.transparent;
-          return InkWell(
-            onTap: () {
-              setState(() {
-                selectedAlphabet = isSelected ? '' : a;
-              });
-            },
-            child: Container(
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: color,
-                // borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
-              ),
-              child: Text(
-                a,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: isSelected ? Colors.white : null,
-                  fontSize: 22,
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
- Widget _listView(List<Contact> list) {
-  return Expanded(
-    child: list.isEmpty
-        ? Center(child: Text('No contacts found'))
-        : ListView.builder(
-            physics: BouncingScrollPhysics(),
-            controller: _scrollController,
-            itemCount: list.length,
-            itemBuilder: (context, int index) {
-              final Contact contact = list[index];
-              return InkWell(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ContactProfilePage(contact: contact),
-                    ),
-                  );
-                },
-                child: Container(
-                  margin: const EdgeInsets.symmetric(vertical: 4),
-                  padding: EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(
-                        width: 0.25,
-                        color: Colors.yellow.withValues(alpha: 0.25),
+  Widget _listView(List<Contact> list) {
+    return Expanded(
+      child: list.isEmpty
+          ? Center(child: Text('No contacts found'))
+          : ListView.builder(
+              physics: BouncingScrollPhysics(),
+              controller: _scrollController,
+              itemCount: list.length,
+              itemBuilder: (context, int index) {
+                final Contact contact = list[index];
+                return InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ContactProfilePage(contact: contact),
                       ),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Text(
-                        '${index + 1}. ',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
+                    );
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          width: 0.25,
+                          color: Colors.yellow.withValues(alpha: 0.25),
                         ),
                       ),
-                      Expanded(
-                        child: RichText(
-                          text: TextSpan(
-                            children: _highlightAlphabet(contact.displayName),
-                            style: TextStyle(
-                              fontSize: 22,
-                              color: txtclr,
+                    ),
+                    child: Row(
+                      children: [
+                        Text(
+                          '${index + 1}. ',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                          ),
+                        ),
+                        Expanded(
+                          child: RichText(
+                            text: TextSpan(
+                              children: _highlightAlphabet(contact.displayName),
+                              style: TextStyle(
+                                fontSize: 22,
+                                color: txtclr,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      callButton(contact.phones.firstOrNull?.number),
-                    ],
+                        callButton(contact.phones.firstOrNull?.number),
+                      ],
+                    ),
                   ),
-                ),
-              );
-            },
-          ),
-  );
-}
-
+                );
+              },
+            ),
+    );
+  }
 
   Widget callButton(String? number) {
     if (number == null) return SizedBox.shrink();
@@ -311,7 +353,7 @@ class _HomePageState extends State<HomePage> {
       child: ClipRRect(
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(30),
-          topRight: Radius.circular(30), 
+          topRight: Radius.circular(30),
         ),
         child: BottomNavigationBar(
           showSelectedLabels: false,
@@ -321,9 +363,12 @@ class _HomePageState extends State<HomePage> {
           currentIndex: currentPage,
           onTap: pageController.jumpToPage,
           items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.history, size: 30), label: 'Recent'),
-            BottomNavigationBarItem(icon: Icon(Icons.list, size: 30), label: 'All'),
-            BottomNavigationBarItem(icon: Icon(Icons.dialpad, size: 28), label: 'Dialer'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.history, size: 30), label: 'Recent'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.list, size: 30), label: 'All'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.dialpad, size: 28), label: 'Dialer'),
           ],
         ),
       ),
@@ -334,7 +379,8 @@ class _HomePageState extends State<HomePage> {
     if (selectedAlphabet.isEmpty) {
       return [TextSpan(text: displayName)];
     }
-    final matches = RegExp(RegExp.escape(selectedAlphabet)).allMatches(displayName);
+    final matches =
+        RegExp(RegExp.escape(selectedAlphabet)).allMatches(displayName);
     if (matches.isEmpty) {
       return [TextSpan(text: displayName)];
     }

@@ -27,15 +27,20 @@ class _DialerPageState extends State<DialerPage> {
   }
 
   Future<void> _initCamera() async {
-    final cameras = await availableCameras();
-    final firstCamera = cameras.first;
-    _cameraController = CameraController(
-      firstCamera,
-      ResolutionPreset.medium,
-      enableAudio: false,
-    );
-    await _cameraController!.initialize();
-    setState(() {});
+    try {
+      final cameras = await availableCameras();
+      if (cameras.isEmpty) return;
+      final firstCamera = cameras.first;
+      _cameraController = CameraController(
+        firstCamera,
+        ResolutionPreset.medium,
+        enableAudio: false,
+      );
+      await _cameraController!.initialize();
+      if (mounted) setState(() {});
+    } catch (e) {
+      debugPrint('Error initializing camera: $e');
+    }
   }
 
   @override
@@ -112,11 +117,18 @@ class _DialerPageState extends State<DialerPage> {
       icon: const Icon(Icons.photo_camera_outlined, color: Colors.white),
       tooltip: 'Scan Number',
       onPressed: () async {
+        if (_cameraController == null || !_cameraController!.value.isInitialized) {
+          await _initCamera();
+        }
+        if (!mounted) return;
         setState(() => _cameraActive = !_cameraActive);
         if (_cameraActive) {
           await Future.delayed(const Duration(seconds: 2));
+          if (!mounted || !_cameraActive) return;
           await _captureAndScan();
-          setState(() => _cameraActive = false);
+          if (mounted) {
+            setState(() => _cameraActive = false);
+          }
         }
       },
     );
@@ -238,29 +250,38 @@ class _DialerPageState extends State<DialerPage> {
   }
 
   Future<void> _captureAndScan() async {
-    if (_cameraController == null || !_cameraController!.value.isInitialized)
+    if (_cameraController == null ||
+        !_cameraController!.value.isInitialized ||
+        _cameraController!.value.isTakingPicture) {
       return;
-
-    final image = await _cameraController!.takePicture();
-    final inputImage = InputImage.fromFilePath(image.path);
-    final textRecognizer = TextRecognizer();
-    final RecognizedText recognizedText =
-        await textRecognizer.processImage(inputImage);
-
-    final text = recognizedText.text.trim();
-    final phoneRegex = RegExp(r'\d{10,14}');
-    final matches = phoneRegex.allMatches(text);
-
-    if (matches.isNotEmpty) {
-      final number = matches.first.group(0);
-      if (number != null) {
-        final cleanNumber = number.replaceAll(RegExp(r'[^0-9+]'), '');
-        setState(() {
-          typedVal = cleanNumber;
-        });
-      }
     }
 
-    textRecognizer.close();
+    final textRecognizer = TextRecognizer();
+    try {
+      final image = await _cameraController!.takePicture();
+      final inputImage = InputImage.fromFilePath(image.path);
+      final RecognizedText recognizedText =
+          await textRecognizer.processImage(inputImage);
+
+      final text = recognizedText.text.trim();
+      final phoneRegex = RegExp(r'\d{10,14}');
+      final matches = phoneRegex.allMatches(text);
+
+      if (matches.isNotEmpty) {
+        final number = matches.first.group(0);
+        if (number != null) {
+          final cleanNumber = number.replaceAll(RegExp(r'[^0-9+]'), '');
+          if (mounted) {
+            setState(() {
+              typedVal = cleanNumber;
+            });
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Error taking picture or recognizing text: $e');
+    } finally {
+      textRecognizer.close();
+    }
   }
 }
