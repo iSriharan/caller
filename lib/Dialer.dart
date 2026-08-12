@@ -71,7 +71,6 @@ class _DialerPageState extends State<DialerPage> {
     );
   }
 
-  /// Display area with camera preview
   Widget _display() {
     return Container(
       height: 150,
@@ -108,7 +107,6 @@ class _DialerPageState extends State<DialerPage> {
     );
   }
 
-  /// Camera icon
   Widget imagesearch() {
     return IconButton(
       icon: const Icon(Icons.photo_camera_outlined, color: Colors.white),
@@ -116,7 +114,6 @@ class _DialerPageState extends State<DialerPage> {
       onPressed: () async {
         setState(() => _cameraActive = !_cameraActive);
         if (_cameraActive) {
-          // short delay to let camera settle
           await Future.delayed(const Duration(seconds: 2));
           await _captureAndScan();
           setState(() => _cameraActive = false);
@@ -125,7 +122,6 @@ class _DialerPageState extends State<DialerPage> {
     );
   }
 
-  /// Number pad
   Widget _numpad() {
     final rows = [
       ['1', '2', '3'],
@@ -172,7 +168,6 @@ class _DialerPageState extends State<DialerPage> {
     );
   }
 
-  /// Bottom actions
   Widget _bottomActions() {
     return SizedBox(
       height: 70,
@@ -204,7 +199,6 @@ class _DialerPageState extends State<DialerPage> {
     );
   }
 
-  //// FUNCTIONS
   void backspacefn() {
     if (typedVal.isNotEmpty) {
       HapticFeedback.lightImpact();
