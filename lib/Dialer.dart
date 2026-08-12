@@ -117,7 +117,8 @@ class _DialerPageState extends State<DialerPage> {
       icon: const Icon(Icons.photo_camera_outlined, color: Colors.white),
       tooltip: 'Scan Number',
       onPressed: () async {
-        if (_cameraController == null || !_cameraController!.value.isInitialized) {
+        if (_cameraController == null ||
+            !_cameraController!.value.isInitialized) {
           await _initCamera();
         }
         if (!mounted) return;
