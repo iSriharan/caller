@@ -49,7 +49,10 @@ class _DialerPageState extends State<DialerPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Center(
-          child: Text("Dialer", style: TextStyle(fontSize: 25)),
+          child: Padding(
+            padding: EdgeInsets.only(left: 50.0),
+            child: Text("Dialer", style: TextStyle(fontSize: 28)),
+          ),
         ),
         actions: [imagesearch()],
       ),
@@ -85,7 +88,7 @@ class _DialerPageState extends State<DialerPage> {
               style: const TextStyle(
                 fontSize: 50,
                 color: Colors.white,
-                letterSpacing: 3,
+                letterSpacing: 2,
               ),
             ),
           ),
@@ -204,6 +207,7 @@ class _DialerPageState extends State<DialerPage> {
   //// FUNCTIONS
   void backspacefn() {
     if (typedVal.isNotEmpty) {
+      HapticFeedback.lightImpact();
       setState(() {
         typedVal = typedVal.substring(0, typedVal.length - 1);
       });
@@ -211,6 +215,7 @@ class _DialerPageState extends State<DialerPage> {
   }
 
   void addDigitfn(String digit) {
+    HapticFeedback.heavyImpact();
     setState(() {
       typedVal += digit;
     });
