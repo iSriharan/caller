@@ -85,7 +85,7 @@ class _DialerPageState extends State<DialerPage> {
               style: const TextStyle(
                 fontSize: 50,
                 color: Colors.white,
-                letterSpacing: 5,
+                letterSpacing: 3,
               ),
             ),
           ),
@@ -176,7 +176,7 @@ class _DialerPageState extends State<DialerPage> {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          FloatingActionButton(
+          FloatingActionButton.large(
             backgroundColor: Colors.greenAccent.shade700,
             onPressed: () async {
               if (typedVal.isNotEmpty) {
@@ -249,7 +249,7 @@ class _DialerPageState extends State<DialerPage> {
         await textRecognizer.processImage(inputImage);
 
     final text = recognizedText.text.trim();
-    final phoneRegex = RegExp(r'\d{5,}');
+    final phoneRegex = RegExp(r'\d{10,14}');
     final matches = phoneRegex.allMatches(text);
 
     if (matches.isNotEmpty) {
