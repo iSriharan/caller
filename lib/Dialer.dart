@@ -19,21 +19,6 @@ class _DialerPageState extends State<DialerPage> {
   CameraController? _cameraController;
   bool _cameraActive = false;
 
-  final List<String> numbers = [
-    '1',
-    '2',
-    '3',
-    '4',
-    '5',
-    '6',
-    '7',
-    '8',
-    '9',
-    '*',
-    '0',
-    '#',
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -86,32 +71,24 @@ class _DialerPageState extends State<DialerPage> {
   /// Display area with camera preview
   Widget _display() {
     return Container(
-      height: 135,
+      height: 150,
       alignment: Alignment.center,
       child: Stack(
         children: [
-          // Camera preview fills the whole rectangle
           if (_cameraActive &&
               _cameraController != null &&
               _cameraController!.value.isInitialized)
-            Positioned.fill(
-              child: CameraPreview(_cameraController!),
-            ),
-
-          // Overlay recognized number
+            Positioned.fill(child: CameraPreview(_cameraController!)),
           Center(
             child: Text(
               typedVal.isEmpty ? "" : typedVal,
               style: const TextStyle(
-                fontSize: 32,
+                fontSize: 50,
                 color: Colors.white,
-                letterSpacing: 2,
-                backgroundColor: Colors.black54,
+                letterSpacing: 5,
               ),
             ),
           ),
-
-          // Paste button when typedVal is empty
           if (typedVal.isEmpty && clipboardNum != null)
             Center(
               child: ElevatedButton(
@@ -136,8 +113,8 @@ class _DialerPageState extends State<DialerPage> {
       onPressed: () async {
         setState(() => _cameraActive = !_cameraActive);
         if (_cameraActive) {
-          // Capture and OCR after short delay
-          await Future.delayed(const Duration(seconds: 20000));
+          // short delay to let camera settle
+          await Future.delayed(const Duration(seconds: 2));
           await _captureAndScan();
           setState(() => _cameraActive = false);
         }
@@ -147,37 +124,48 @@ class _DialerPageState extends State<DialerPage> {
 
   /// Number pad
   Widget _numpad() {
-    return GridView.builder(
-      physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
-      itemCount: numbers.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        mainAxisSpacing: 20,
-        crossAxisSpacing: 20,
-        childAspectRatio: 1.1,
-      ),
-      itemBuilder: (context, index) {
-        return InkWell(
-          onTap: () => addDigitfn(numbers[index]),
-          child: Container(
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.black54.withOpacity(0.1),
-              border: Border.all(color: Colors.grey.shade700),
-            ),
-            child: Text(
-              numbers[index],
-              style: const TextStyle(
-                fontSize: 30,
-                color: Colors.white,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
+    final rows = [
+      ['1', '2', '3'],
+      ['4', '5', '6'],
+      ['7', '8', '9'],
+      ['*', '0', '#']
+    ];
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: rows.map((row) {
+        return Padding(
+          padding: const EdgeInsets.only(left: 10, right: 10, top: 27),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: row.map((x) {
+              return SizedBox(
+                height: 80,
+                width: 80,
+                child: Material(
+                  color: Colors.white10,
+                  elevation: 1,
+                  shadowColor: Colors.transparent,
+                  shape: const CircleBorder(),
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    onTap: () => addDigitfn(x),
+                    child: Center(
+                      child: Text(
+                        x,
+                        style: const TextStyle(
+                          fontSize: 30,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
           ),
         );
-      },
+      }).toList(),
     );
   }
 
@@ -199,9 +187,8 @@ class _DialerPageState extends State<DialerPage> {
             child: const Icon(Icons.call, color: Colors.white, size: 28),
           ),
           if (typedVal.isNotEmpty)
-            Positioned(
-              right: 16,
-              bottom: 0,
+            Padding(
+              padding: EdgeInsetsGeometry.only(left: 200),
               child: IconButton(
                 icon:
                     const Icon(Icons.backspace, color: Colors.white, size: 30),
@@ -251,7 +238,6 @@ class _DialerPageState extends State<DialerPage> {
     }
   }
 
-  /// Capture frame and OCR
   Future<void> _captureAndScan() async {
     if (_cameraController == null || !_cameraController!.value.isInitialized)
       return;
@@ -262,8 +248,8 @@ class _DialerPageState extends State<DialerPage> {
     final RecognizedText recognizedText =
         await textRecognizer.processImage(inputImage);
 
-    final text = recognizedText.text;
-    final phoneRegex = RegExp(r'(\+?\d[\d\s\-\(\)]{6,})');
+    final text = recognizedText.text.trim();
+    final phoneRegex = RegExp(r'\d{5,}');
     final matches = phoneRegex.allMatches(text);
 
     if (matches.isNotEmpty) {
