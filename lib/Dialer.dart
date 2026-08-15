@@ -151,8 +151,8 @@ class _DialerPageState extends State<DialerPage> {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: row.map((x) {
               return SizedBox(
-                height: 80,
-                width: 80,
+                height: 70,
+                width: 70,
                 child: Material(
                   color: Colors.white10,
                   elevation: 1,
@@ -182,33 +182,41 @@ class _DialerPageState extends State<DialerPage> {
   }
 
   Widget _bottomActions() {
-    return SizedBox(
-      height: 70,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          FloatingActionButton.large(
-            backgroundColor: Colors.greenAccent.shade700,
-            onPressed: () async {
-              if (typedVal.isNotEmpty) {
-                DirectDialer plugIN = await DirectDialer.instance;
-                await plugIN.dial(typedVal);
-              }
-            },
-            child: const Icon(Icons.call, color: Colors.white, size: 28),
-          ),
-          if (typedVal.isNotEmpty)
-            Padding(
-              padding: EdgeInsetsGeometry.only(left: 200),
-              child: IconButton(
-                icon:
-                    const Icon(Icons.backspace, color: Colors.white, size: 30),
-                onPressed: backspacefn,
-                onLongPress: () => setState(() => typedVal = ""),
+    return Row(
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 165),
+          child: Center(
+            child: IconButton(
+              onPressed: () async {
+                if (typedVal.isNotEmpty) {
+                  DirectDialer plugIN = await DirectDialer.instance;
+                  await plugIN.dial(typedVal);
+                }
+              },
+              icon: SizedBox(
+                width: 100,
+                height: 100,
+                child: CircleAvatar(
+                  radius: 100,
+                  backgroundColor: Colors.greenAccent.shade700,
+                  child: const Icon(Icons.call, color: Colors.white, size: 31),
+                ),
               ),
             ),
-        ],
-      ),
+          ),
+        ),
+        Spacer(),
+        if (typedVal.isNotEmpty)
+          Padding(
+            padding: EdgeInsetsGeometry.only(bottom: 0, right: 60),
+            child: IconButton(
+              icon: const Icon(Icons.backspace, color: Colors.white, size: 30),
+              onPressed: backspacefn,
+              onLongPress: () => setState(() => typedVal = ""),
+            ),
+          ),
+      ],
     );
   }
 

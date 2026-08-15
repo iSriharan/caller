@@ -338,8 +338,8 @@ class _HomePageState extends State<HomePage> {
       decoration: BoxDecoration(
         color: Colors.grey.shade900,
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(30),
-          topRight: Radius.circular(30),
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
         ),
         boxShadow: [
           BoxShadow(
@@ -351,8 +351,8 @@ class _HomePageState extends State<HomePage> {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(30),
-          topRight: Radius.circular(30),
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
         ),
         child: BottomNavigationBar(
           showSelectedLabels: false,
@@ -363,11 +363,11 @@ class _HomePageState extends State<HomePage> {
           onTap: pageController.jumpToPage,
           items: const [
             BottomNavigationBarItem(
-                icon: Icon(Icons.history, size: 30), label: 'Recent'),
+                icon: Icon(Icons.history, size: 25), label: 'Recent'),
             BottomNavigationBarItem(
-                icon: Icon(Icons.list, size: 30), label: 'All'),
+                icon: Icon(Icons.list, size: 25), label: 'All'),
             BottomNavigationBarItem(
-                icon: Icon(Icons.dialpad, size: 28), label: 'Dialer'),
+                icon: Icon(Icons.dialpad, size: 25), label: 'Dialer'),
           ],
         ),
       ),
