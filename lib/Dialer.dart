@@ -18,9 +18,11 @@ class _DialerPageState extends State<DialerPage> {
 
   CameraController? _cameraController;
   bool _cameraActive = false;
+  bool _isProcessingImage = false;
 
   @override
   void initState() {
+    
     super.initState();
     _checkClipboardForNumber();
     _initCamera();
@@ -52,11 +54,13 @@ class _DialerPageState extends State<DialerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // backgroundColor: Colors., // Recommended for dialers
       appBar: AppBar(
+        // backgroundColor: Colors.transparent,
         title: const Center(
           child: Padding(
-            padding: EdgeInsets.only(left: 50.0),
-            child: Text("Dialer", style: TextStyle(fontSize: 28)),
+            padding: EdgeInsets.only(left: 50.0), // Offset for the action button
+            child: Text("Dialer", style: TextStyle(fontSize: 28, color: Colors.white)),
           ),
         ),
         actions: [imagesearch()],
@@ -65,49 +69,77 @@ class _DialerPageState extends State<DialerPage> {
         child: Column(
           children: [
             _display(),
-            const Divider(color: Colors.grey),
+            const Divider(color: Colors.grey, height: 1),
             Expanded(child: _numpad()),
-            const SizedBox(height: 20),
+            const SizedBox(height: 10),
             _bottomActions(),
             const SizedBox(height: 20),
-            // backspacebtn(),
-            // const SizedBox(height: 20),
           ],
         ),
       ),
     );
   }
-
   
+
   Widget _display() {
     return Container(
       height: 150,
+      width: double.infinity,
       alignment: Alignment.center,
       child: Stack(
         children: [
+          // Camera Preview Box
           if (_cameraActive &&
               _cameraController != null &&
               _cameraController!.value.isInitialized)
-            Positioned.fill(child: CameraPreview(_cameraController!)),
+            Positioned.fill(
+              child: ClipRect(
+                child: FittedBox(
+                  fit: BoxFit.cover,
+                  child: SizedBox(
+                    // Flips width/height for portrait aspect ratio
+                    width: _cameraController!.value.previewSize?.height ?? 1,
+                    height: _cameraController!.value.previewSize?.width ?? 1,
+                    child: CameraPreview(_cameraController!),
+                  ),
+                ),
+              ),
+            ),
+            
+          // Scanning Indicator
+          if (_isProcessingImage)
+            const Center(
+              child: CircularProgressIndicator(color: Colors.green),
+            ),
+            
+          // Typed or Scanned Value
           Center(
             child: Text(
               typedVal.isEmpty ? "" : typedVal,
               style: const TextStyle(
-                fontSize: 50,
+                fontSize: 45, // Slightly smaller to fit longer numbers
                 color: Colors.white,
                 letterSpacing: 2,
+                fontWeight: FontWeight.w500,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          if (typedVal.isEmpty && clipboardNum != null)
+          
+          // Paste Button
+          if (typedVal.isEmpty && clipboardNum != null && !_cameraActive)
             Center(
               child: ElevatedButton(
                 onPressed: _onPaste,
-                style: TextButton.styleFrom(
-                  backgroundColor: Colors.transparent,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.grey[800],
                   foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
                 ),
-                child: const Text("Paste"),
+                child: const Text("Paste Copied Number"),
               ),
             ),
         ],
@@ -115,29 +147,32 @@ class _DialerPageState extends State<DialerPage> {
     );
   }
 
-  Widget imagesearch() {
+
+Widget imagesearch() {
     return IconButton(
-      icon: const Icon(Icons.photo_camera_outlined, color: Colors.white),
+      icon: Icon(
+        _cameraActive ? Icons.camera : Icons.photo_camera_outlined,
+        color: _cameraActive ? Colors.green : Colors.white,
+      ),
       tooltip: 'Scan Number',
       onPressed: () async {
-        if (_cameraController == null ||
-            !_cameraController!.value.isInitialized) {
+        if (_cameraController == null || !_cameraController!.value.isInitialized) {
           await _initCamera();
         }
         if (!mounted) return;
+        
         setState(() => _cameraActive = !_cameraActive);
+        
         if (_cameraActive) {
-          await Future.delayed(const Duration(seconds: 2));
+          // Give camera 1.5 seconds to open and auto-adjust lighting
+          await Future.delayed(const Duration(milliseconds: 1500));
           if (!mounted || !_cameraActive) return;
           await _captureAndScan();
-          if (mounted) {
-            setState(() => _cameraActive = false);
-          }
         }
       },
     );
   }
-
+  
   Widget _numpad() {
     final rows = [
       ['1', '2', '3'],
@@ -188,64 +223,66 @@ class _DialerPageState extends State<DialerPage> {
     );
   }
 
+
 Widget _bottomActions() {
-  return Row(
-    children: [
-      Padding(
-        padding: const EdgeInsets.only(left: 168,bottom: 10),
-        child: Column(
-          children: [
-               Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(90),
-                  
-                  
-                  onTap: () async {
-                    if (typedVal.isNotEmpty)
-                     {
-                      HapticFeedback.lightImpact();
-                      DirectDialer plugIN = await DirectDialer.instance;
-                      await plugIN.dial(typedVal);
-                    }
-                  },
-                  child: Container(
-                    height: 70,
-                    width: 70,
-                    padding: const EdgeInsets.all(12.0),
-                    decoration: const BoxDecoration(
-                      color: Colors.green,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.call,
-                      color: Colors.white,
-                      size: 31,
-                    ),
-                  ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 40.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Empty space to perfectly center the call button
+          const SizedBox(width: 50),
+          const Spacer(),
+          
+          // Call Button
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(90),
+              onTap: () async {
+                if (typedVal.isNotEmpty) {
+                  HapticFeedback.lightImpact();
+                  DirectDialer plugIN = await DirectDialer.instance;
+                  await plugIN.dial(typedVal);
+                }
+              },
+              child: Container(
+                height: 75,
+                width: 75,
+                decoration: const BoxDecoration(
+                  color: Colors.green,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.call,
+                  color: Colors.white,
+                  size: 35,
                 ),
               ),
-            
-          ],
-        ),
+            ),
+          ),
+          
+          const Spacer(),
+          
+          // Backspace Button (Takes exactly 50 width to balance layout)
+          SizedBox(
+            width: 50,
+            child: typedVal.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.backspace, color: Colors.white, size: 28),
+                    onPressed: backspacefn,
+                    onLongPress: () {
+                      HapticFeedback.heavyImpact();
+                      setState(() => typedVal = "");
+                    },
+                  )
+                : const SizedBox.shrink(),
+          ),
+        ],
       ),
-      Padding(
-        padding: const EdgeInsets.only(left: 50),
-        child: Column(
-          children: [
-            if (typedVal.isNotEmpty)
-           
-               IconButton(
-                icon: const Icon(Icons.backspace, color: Colors.white, size: 30),
-                onPressed: backspacefn, 
-                onLongPress: () => setState(() => typedVal = ""),
-              ),
-          ],
-        ),
-      )
-    ],
-  );
-}
+    );
+  }
+
 
 
 
@@ -282,46 +319,82 @@ Widget _bottomActions() {
 
   void _onPaste() {
     if (clipboardNum != null) {
+      final cleanNum= clipboardNum!.replaceAll(RegExp(r'[^0-9+]'),'');
       setState(() {
-        typedVal = clipboardNum!;
+        typedVal = cleanNum;
         clipboardNum = null;
       });
     }
   }
 
   Future<void> _captureAndScan() async {
-    if (_cameraController == null ||
-        !_cameraController!.value.isInitialized ||
-        _cameraController!.value.isTakingPicture) {
+    if (_cameraController == null || !_cameraController!.value.isInitialized) {
       return;
     }
+    setState(() => _isProcessingImage = true);
 
-    final textRecognizer = TextRecognizer();
+    final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
     try {
-      final image = await _cameraController!.takePicture();
-      final inputImage = InputImage.fromFilePath(image.path);
-      final RecognizedText recognizedText =
-          await textRecognizer.processImage(inputImage);
+      while (_cameraActive && mounted) {
+        if (_cameraController!.value.isTakingPicture) {
+          await Future.delayed(const Duration(milliseconds: 200));
+          continue;
+        }
 
-      final text = recognizedText.text.trim();
-      final phoneRegex = RegExp(r'\d{10,14}');
-      final matches = phoneRegex.allMatches(text);
+        try {
+          await _cameraController!.setFocusMode(FocusMode.auto);
+        } catch (_) {}
 
-      if (matches.isNotEmpty) {
-        final number = matches.first.group(0);
-        if (number != null) {
-          final cleanNumber = number.replaceAll(RegExp(r'[^0-9+]'), '');
+        final image = await _cameraController!.takePicture();
+        final inputImage = InputImage.fromFilePath(image.path);
+        final RecognizedText recognizedText =
+            await textRecognizer.processImage(inputImage);
+
+        String? detectedphone;
+        for (TextBlock block in recognizedText.blocks) {
+          for (TextLine line in block.lines) {
+            final rawLine = line.text;
+            final digitsonly = rawLine.replaceAll(RegExp(r'[^0-9+]'), '');
+            final match = RegExp(r'(\+?\d{7,15})').firstMatch(digitsonly);
+            if (match != null) {
+              detectedphone = match.group(0);
+              break;
+            }
+          }
+          if (detectedphone != null) break;
+        }
+
+        if (detectedphone != null) {
+          final String foundNumber = detectedphone;
+          debugPrint('Phone number detected: $foundNumber');
           if (mounted) {
             setState(() {
-              typedVal = cleanNumber;
+              typedVal = foundNumber;
+              _cameraActive = false;
+              _isProcessingImage = false;
             });
+            HapticFeedback.vibrate();
           }
+          return; // exit the method entirely
         }
+
+        // Wait 1 second before capturing the next frame to try again
+        await Future.delayed(const Duration(seconds: 1));
       }
     } catch (e) {
-      debugPrint('Error taking picture or recognizing text: $e');
+      debugPrint('Error taking picture or recognizing text:$e');
     } finally {
       textRecognizer.close();
+      if (mounted) {
+        setState(() => _isProcessingImage = false);
+      }
     }
   }
 }
+
+
+
+
+
+
+
