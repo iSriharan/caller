@@ -70,12 +70,15 @@ class _DialerPageState extends State<DialerPage> {
             const SizedBox(height: 20),
             _bottomActions(),
             const SizedBox(height: 20),
+            // backspacebtn(),
+            // const SizedBox(height: 20),
           ],
         ),
       ),
     );
   }
 
+  
   Widget _display() {
     return Container(
       height: 150,
@@ -146,13 +149,17 @@ class _DialerPageState extends State<DialerPage> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: rows.map((row) {
         return Padding(
-          padding: const EdgeInsets.only(left: 10, right: 10, top: 27),
+          padding: const EdgeInsets.only(
+            left: 10,
+            right: 10,
+            top: 20,
+          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: row.map((x) {
               return SizedBox(
-                height: 70,
-                width: 70,
+                height: 80,
+                width: 80,
                 child: Material(
                   color: Colors.white10,
                   elevation: 1,
@@ -165,7 +172,7 @@ class _DialerPageState extends State<DialerPage> {
                       child: Text(
                         x,
                         style: const TextStyle(
-                          fontSize: 30,
+                          fontSize: 34,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
@@ -181,44 +188,68 @@ class _DialerPageState extends State<DialerPage> {
     );
   }
 
-  Widget _bottomActions() {
-    return Row(
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 165),
-          child: Center(
-            child: IconButton(
-              onPressed: () async {
-                if (typedVal.isNotEmpty) {
-                  DirectDialer plugIN = await DirectDialer.instance;
-                  await plugIN.dial(typedVal);
-                }
-              },
-              icon: SizedBox(
-                width: 100,
-                height: 100,
-                child: CircleAvatar(
-                  radius: 100,
-                  backgroundColor: Colors.greenAccent.shade700,
-                  child: const Icon(Icons.call, color: Colors.white, size: 31),
+Widget _bottomActions() {
+  return Row(
+    children: [
+      Padding(
+        padding: const EdgeInsets.only(left: 168,bottom: 10),
+        child: Column(
+          children: [
+               Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(90),
+                  
+                  
+                  onTap: () async {
+                    if (typedVal.isNotEmpty)
+                     {
+                      HapticFeedback.lightImpact();
+                      DirectDialer plugIN = await DirectDialer.instance;
+                      await plugIN.dial(typedVal);
+                    }
+                  },
+                  child: Container(
+                    height: 70,
+                    width: 70,
+                    padding: const EdgeInsets.all(12.0),
+                    decoration: const BoxDecoration(
+                      color: Colors.green,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.call,
+                      color: Colors.white,
+                      size: 31,
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
+            
+          ],
         ),
-        Spacer(),
-        if (typedVal.isNotEmpty)
-          Padding(
-            padding: EdgeInsetsGeometry.only(bottom: 0, right: 60),
-            child: IconButton(
-              icon: const Icon(Icons.backspace, color: Colors.white, size: 30),
-              onPressed: backspacefn,
-              onLongPress: () => setState(() => typedVal = ""),
-            ),
-          ),
-      ],
-    );
-  }
+      ),
+      Padding(
+        padding: const EdgeInsets.only(left: 50),
+        child: Column(
+          children: [
+            if (typedVal.isNotEmpty)
+           
+               IconButton(
+                icon: const Icon(Icons.backspace, color: Colors.white, size: 30),
+                onPressed: backspacefn, 
+                onLongPress: () => setState(() => typedVal = ""),
+              ),
+          ],
+        ),
+      )
+    ],
+  );
+}
+
+
+
+ 
 
   void backspacefn() {
     if (typedVal.isNotEmpty) {
