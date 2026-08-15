@@ -13,6 +13,7 @@ class Keyboard extends StatefulWidget {
 
 class _KeyboardState extends State<Keyboard> {
   final TextEditingController _controller = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
   List<Contact> _contacts = [];
   List<Contact> _filteredContacts = [];
 
@@ -20,6 +21,11 @@ class _KeyboardState extends State<Keyboard> {
   void initState() {
     super.initState();
     _loadContacts();
+
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      FocusScope.of(context).requestFocus(_focusNode);
+    });
   }
 
   Future<void> _loadContacts() async {
@@ -41,12 +47,20 @@ class _KeyboardState extends State<Keyboard> {
   }
 
   void _filterContacts(String query) {
-    setState(() {
-      _filteredContacts = _contacts.where((c) {
-        return c.displayName.toLowerCase().contains(query.toLowerCase());
-      }).toList();
-    });
-  }
+  setState(() {
+    _filteredContacts = _contacts.where((c) {
+      final nameMatch = c.displayName.toLowerCase().contains(query.toLowerCase());
+
+      // check if any phone number contains the query
+      final numberMatch = c.phones.any((p) =>
+          p.number.replaceAll(RegExp(r'\s+'), '') // strip spaces
+              .contains(query));
+
+      return nameMatch || numberMatch;
+    }).toList();
+  });
+}
+
 
   Future<void> _callNumber(String number) async {
     final dialer = await DirectDialer.instance;
@@ -56,11 +70,12 @@ class _KeyboardState extends State<Keyboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Keyboard")),
+      appBar: AppBar(title: const Text("Contact finder")),
       body: Column(
         children: [
           TextField(
             controller: _controller,
+            focusNode: _focusNode,
             decoration: const InputDecoration(
               labelText: "Search Contacts",
               prefixIcon: Icon(Icons.search),
@@ -70,7 +85,7 @@ class _KeyboardState extends State<Keyboard> {
           const SizedBox(height: 10),
           Expanded(
             child: _filteredContacts.isEmpty
-                ? const Center(child: Text("No contacts found"))
+                ? const Center(child: Text("Loading..."))
                 : ListView.builder(
                     itemCount: _filteredContacts.length,
                     itemBuilder: (context, index) {
