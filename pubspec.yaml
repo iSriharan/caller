@@ -8,6 +8,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+    
+  provider: ^6.1.2  
 
   # phone_number: 2.0.1
   fast_contacts: 4.0.0
